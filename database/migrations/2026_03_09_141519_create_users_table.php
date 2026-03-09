@@ -17,7 +17,9 @@ return new class extends Migration
 
             $table->string('name'); // User's display name
             $table->string('email')->unique(); // Unique email for login
+            $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // Hashed password
+            $table->rememberToken();
             $table->string('avatar_url')->nullable(); // Optional profile picture URL
             $table->string('nationality')->nullable(); // Optional nationality info
 

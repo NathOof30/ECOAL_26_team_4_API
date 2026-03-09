@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\Collection;
 use Illuminate\Http\Request;
 
 class ItemsController extends Controller
@@ -24,8 +25,8 @@ class ItemsController extends Controller
     public function store(Request $request)
     {
         // Check if the user has a collection to add items to
-        $collection = $request->user()->collection;
-        
+        $collection = Collection::where('user_id', $request->user()->id)->first();
+
         if (!$collection) {
             return response()->json(['message' => 'You must create a collection first before adding items.'], 403);
         }
