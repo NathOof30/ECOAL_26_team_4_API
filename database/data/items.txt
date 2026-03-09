@@ -1,0 +1,13 @@
+title,description,image_url,status,collection_id,category1_id,category2_id
+Zippo 1941 Replica,Faithful replica of the 1941 military Zippo in brushed brass. Refillable with lighter fluid.,https://example.com/images/zippo-1941.jpg,1,1,1,6
+BIC Classic,The best-selling disposable lighter in the world. Simple and reliable with spark wheel ignition.,https://example.com/images/bic-classic.jpg,1,1,1,7
+Clipper Original,Refillable lighter with flint and built-in packing tool.,https://example.com/images/clipper.jpg,1,1,1,7
+Tesla Coil Arc Lighter,USB rechargeable electric lighter with dual plasma arc. Modern design.,https://example.com/images/tesla-arc.jpg,1,2,3,7
+Dupont Line 2,Luxury S.T. Dupont lighter with piezoelectric mechanism and lacquer finish.,https://example.com/images/dupont-ligne2.jpg,1,2,2,7
+Imco Triplex Super 6700,Vintage Austrian fluid lighter with spark wheel mechanism and wind guard.,https://example.com/images/imco-triplex.jpg,0,3,1,6
+Ronson Varaflame,Vintage Ronson gas lighter with adjustable flame and chrome body.,https://example.com/images/ronson-vara.jpg,1,3,1,6
+Trench Lighter,Handcrafted lighter made by soldiers during World War I.,https://example.com/images/briquet-tranchee.jpg,1,4,4,5
+Xikar Allume,High-performance piezoelectric torch lighter for cigars.,https://example.com/images/xikar.jpg,0,4,2,7
+Antique Tinder Lighter,Old tinder and flint lighter from the 19th century. Rare collector's item.,https://example.com/images/amadou.jpg,1,5,4,5
+Colibri Quantum,Modern Colibri lighter with triple jet and piezoelectric ignition.,https://example.com/images/colibri.jpg,1,5,2,7
+Thorens Single Claw,Vintage Swiss fluid lighter with patented claw mechanism.,https://example.com/images/thorens.jpg,0,5,1,6

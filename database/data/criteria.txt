@@ -1,0 +1,5 @@
+name
+Durability
+Price
+Rarity
+Autonomy
