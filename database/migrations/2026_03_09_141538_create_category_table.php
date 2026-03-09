@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      * Creates the category table.
@@ -15,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('category', function (Blueprint $table) {
             $table->id(); // Auto-incrementing primary key
-            $table->string('title'); // Category name (e.g. 'Mécanisme', 'Période')
+            $table->string('title'); // Category name (e.g. 'Mechanism', 'Period')
             $table->timestamps(); // created_at and updated_at columns
         });
     }
