@@ -9,6 +9,7 @@ use App\Http\Controllers\API\CategoryController;
 use App\Http\Controllers\API\ItemsController;
 use App\Http\Controllers\API\CriteriaController;
 use App\Http\Controllers\API\ItemCriteriaController;
+use App\Http\Controllers\API\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,72 +19,88 @@ use App\Http\Controllers\API\ItemCriteriaController;
 | All routes below are automatically prefixed with /api
 | Example base URL: http://127.0.0.1:8000/api
 |
+| --- AUTHENTICATION ---
+| POST   /register           : Create an account            - 
+| POST   /login              : Log in (retrieve token)      - 
+| POST   /logout             : Log out (delete token)       - (Requires Auth)
+| GET    /user               : Get the logged in user       - (Requires Auth)
+|
 | --- USERS ---
-| GET    /users              : Get a list of all users      - checked OK
-| POST   /users              : Create a new user            - checked OK
-| GET    /users/{id}         : Get specific user details    - checked OK
-| PUT    /users/{id}         : Update a specific user       - checked OK
-| DELETE /users/{id}         : Delete a specific user       - checked OK
+| GET    /users              : List of users                - checked OK (Public)
+| GET    /users/{id}         : Details of a user            - checked OK (Public)
+| POST, PUT, DELETE          : (Locked or to be managed)    - (Requires Auth)
 |
 | --- COLLECTIONS ---
-| GET    /collections        : Get a list of all collections    - checked OK
-| POST   /collections        : Create a new collection          - how ? user must be connected -> give the Bearer token ?          
-| GET    /collections/{id}   : Get specific collection details  - checked OK
-| PUT    /collections/{id}   : Update a specific collection     - checked OK
-| DELETE /collections/{id}   : Delete a specific collection     - checked OK
+| GET    /collections        : List of collections          - checked OK (Public)
+| GET    /collections/{id}   : Details of a collection      - checked OK (Public)
+| POST   /collections        : Create a collection          - IMPROVED: Uses auth()->user()->id automatically (Requires Auth)
+| PUT, DELETE /collections/{id}: Update/Delete a collection - (Requires Auth)
 |
 | --- CATEGORIES ---
-| GET    /categories         : Get a list of all categories     - checked OK -> delete timestamp ?
-| POST   /categories         : Create a new category            - checked OK
-| GET    /categories/{id}    : Get specific category details    - checked OK
-| PUT    /categories/{id}    : Update a specific category       - checked OK
-| DELETE /categories/{id}    : Delete a specific category       - checked OK
+| GET    /categories         : List of categories           - IMPROVED: timestamps hidden ! (Public)
+| GET    /categories/{id}    : Details of a category        - checked OK (Public)
+| POST, PUT, DELETE          : Manage categories            - (Requires Auth - ideally Admin account)
 |
 | --- ITEMS ---
-| GET    /items              : Get a list of all items          - checked OK
-| POST   /items              : Create a new item                - user must be connected -> to connect with collection... and on created -> call item-criteria to add scores -> depend on the form ?     
-| GET    /items/{id}         : Get specific item details        - checked OK
-| PUT    /items/{id}         : Update a specific item           - checked OK
-| DELETE /items/{id}         : Delete a specific item           - checked OK
+| GET    /items              : List of items                - checked OK (Public)
+| GET    /items/{id}         : Details of an item           - checked OK (Public)
+| POST   /items              : Create an item               - IMPROVED: Assigns automatically to user's collection (Requires Auth)
+| PUT, DELETE /items/{id}    : Update/Delete an item        - (Requires Auth)
 |
 | --- CRITERIA ---
-| GET    /criteria           : Get a list of all criteria       - checked OK
-| POST   /criteria           : Create a new criterion           - checked OK
-| GET    /criteria/{id}      : Get specific criterion details   - checked OK
-| PUT    /criteria/{id}      : Update a specific criterion      - checked OK
-| DELETE /criteria/{id}      : Delete a specific criterion      - checked OK
+| GET    /criteria           : List of criteria             - checked OK (Public)
+| GET    /criteria/{id}      : Details of a criterion       - checked OK (Public)
+| POST, PUT, DELETE          : Manage criteria              - (Requires Auth - ideally Admin account)
 |
 | --- ITEM CRITERIA (SCORES) ---
-| GET    /item-criteria                     : Get all item-criteria records                     - checked OK -> too much infos but ok
-| POST   /item-criteria                     : Assign a score to an item for a criterion         - 
-| GET    /items/{item_id}/criteria          : Get all criteria and scores for a specific item   - checked OK
-| PUT    /items/{item_id}/criteria/{crit_id}: Update score for a specific item's criterion      - 
-| DELETE /items/{item_id}/criteria/{crit_id}: Delete a score for a specific item's criterion    - 
-|
-|--------------------------------------------------------------------------
-| New routes to execute below:
-|--------------------------------------------------------------------------
-|
-|
-|
+| GET    /item-criteria                     : List of scores                  - checked OK (Public)
+| GET    /items/{item_id}/criteria          : Scores spécifiques à un item    - checked OK (Public)
+| POST   /item-criteria                     : Assigner un score               - [À TESTER/AMÉLIORER] (Requires Auth)
+| PUT    /items/{item_id}/criteria/{crit_id}: Mettre à jour un score          - [À TESTER/AMÉLIORER] (Requires Auth)
+| DELETE /items/{item_id}/criteria/{crit_id}: Supprimer un score              - [À TESTER/AMÉLIORER] (Requires Auth)
 |
 */
 
-// Default Sanctum route for authenticated user
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// ==========================================
+// 1. PUBLIC ROUTES (No Token Required)
+// ==========================================
 
-// RESTful API resource routes for all entities
-Route::apiResource('users', UsersController::class);
-Route::apiResource('collections', CollectionsController::class);
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('items', ItemsController::class);
-Route::apiResource('criteria', CriteriaController::class);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-// Item criteria scores (pivot table) — custom routes
+// Public reading (GET only)
+Route::apiResource('users', UsersController::class)->only(['index', 'show']);
+Route::apiResource('collections', CollectionsController::class)->only(['index', 'show']);
+Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+Route::apiResource('items', ItemsController::class)->only(['index', 'show']);
+Route::apiResource('criteria', CriteriaController::class)->only(['index', 'show']);
+
+// Scores - Public reading
 Route::get('item-criteria', [ItemCriteriaController::class, 'index']);
-Route::post('item-criteria', [ItemCriteriaController::class, 'store']);
 Route::get('items/{item}/criteria', [ItemCriteriaController::class, 'show']);
-Route::put('items/{item}/criteria/{criterion}', [ItemCriteriaController::class, 'update']);
-Route::delete('items/{item}/criteria/{criterion}', [ItemCriteriaController::class, 'destroy']);
+
+// ==========================================
+// 2. PROTECTED ROUTES (Require Bearer Token)
+// ==========================================
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Auth routes
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    // Protected writing (POST, PUT, DELETE)
+    Route::apiResource('users', UsersController::class)->except(['index', 'show']);
+    Route::apiResource('collections', CollectionsController::class)->except(['index', 'show']);
+    Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+    Route::apiResource('items', ItemsController::class)->except(['index', 'show']);
+    Route::apiResource('criteria', CriteriaController::class)->except(['index', 'show']);
+
+    // Scores - Protected writing
+    Route::post('item-criteria', [ItemCriteriaController::class, 'store']);
+    Route::put('items/{item}/criteria/{criterion}', [ItemCriteriaController::class, 'update']);
+    Route::delete('items/{item}/criteria/{criterion}', [ItemCriteriaController::class, 'destroy']);
+
+});

@@ -23,16 +23,25 @@ class ItemsController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate incoming data
+        // Check if the user has a collection to add items to
+        $collection = $request->user()->collection;
+        
+        if (!$collection) {
+            return response()->json(['message' => 'You must create a collection first before adding items.'], 403);
+        }
+
+        // Validate incoming data (collection_id is no longer needed in the request)
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'image_url' => 'nullable|string|max:255',
             'status' => 'nullable|boolean',
-            'collection_id' => 'required|exists:collections,id',
             'category1_id' => 'required|exists:category,id',
             'category2_id' => 'nullable|exists:category,id',
         ]);
+
+        // Automatically assign the user's collection
+        $validated['collection_id'] = $collection->id;
 
         $item = Item::create($validated);
         return response()->json($item->load(['category1', 'category2']), 201);

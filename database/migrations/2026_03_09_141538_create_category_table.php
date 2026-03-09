@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('category', function (Blueprint $table) {
             $table->id(); // Auto-incrementing primary key
-            $table->string('title'); // Category name (e.g. 'Mechanism', 'Period')
+            $table->string('title'); // Category name (e.g. 'Mechanism : Spark wheel, Piezoelectric, Electric arc, Friction', 'Period : Antique (Pre-1920), Vintage (1920-1970), Modern (1970+)')
             $table->timestamps(); // created_at and updated_at columns
         });
     }

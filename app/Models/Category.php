@@ -23,6 +23,16 @@ class Category extends Model
     ];
 
     /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
      * Items that have this as their primary category.
      */
     public function itemsAsCategory1()

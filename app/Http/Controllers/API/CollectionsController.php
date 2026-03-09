@@ -23,12 +23,19 @@ class CollectionsController extends Controller
      */
     public function store(Request $request)
     {
+        // Enforce maximum of 1 collection per user
+        if ($request->user()->collection) {
+            return response()->json(['message' => 'User already has a collection.'], 403);
+        }
+
         // Validate incoming data
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'user_id' => 'required|exists:users,id|unique:collections,user_id',
         ]);
+
+        // Attach the authenticated user's ID
+        $validated['user_id'] = $request->user()->id;
 
         $collection = Collection::create($validated);
         return response()->json($collection, 201);
