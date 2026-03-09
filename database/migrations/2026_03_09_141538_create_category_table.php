@@ -8,12 +8,15 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * Creates the category table.
+     * Expected entries: 'Mécanisme' (ignition type) and 'Période' (era).
      */
     public function up(): void
     {
         Schema::create('category', function (Blueprint $table) {
-            $table->id();
-            $table->varchar('title');
+            $table->id(); // Auto-incrementing primary key
+            $table->string('title'); // Category name (e.g. 'Mécanisme', 'Période')
+            $table->timestamps(); // created_at and updated_at columns
         });
     }
 
