@@ -20,8 +20,8 @@ use App\Http\Controllers\API\AuthController;
 | Example base URL: http://127.0.0.1:8000/api
 |
 | --- AUTHENTICATION ---
-| POST   /register           : Create an account            - 
-| POST   /login              : Log in (retrieve token)      - 
+| POST   /register           : Create an account            - need to be checked
+| POST   /login              : Log in (retrieve token)      - need to be checked
 | POST   /logout             : Log out (delete token)       - (Requires Auth)
 | GET    /user               : Get the logged in user       - (Requires Auth)
 |
@@ -53,11 +53,11 @@ use App\Http\Controllers\API\AuthController;
 | POST, PUT, DELETE          : Manage criteria              - (Requires Auth - ideally Admin account)
 |
 | --- ITEM CRITERIA (SCORES) ---
-| GET    /item-criteria                     : List of scores                  - checked OK (Public)
-| GET    /items/{item_id}/criteria          : Scores spécifiques à un item    - checked OK (Public)
-| POST   /item-criteria                     : Assigner un score               - [À TESTER/AMÉLIORER] (Requires Auth)
-| PUT    /items/{item_id}/criteria/{crit_id}: Mettre à jour un score          - [À TESTER/AMÉLIORER] (Requires Auth)
-| DELETE /items/{item_id}/criteria/{crit_id}: Supprimer un score              - [À TESTER/AMÉLIORER] (Requires Auth)
+| GET    /item-criteria                     : List of scores                 - checked OK (Public)
+| GET    /items/{item_id}/criteria          : Specific scores for an item    - checked OK (Public)
+| POST   /item-criteria                     : Assign a score                 - [need to be checked/improved] (Requires Auth)
+| PUT    /items/{item_id}/criteria/{crit_id}: Update a score                 - [need to be checked/improved] (Requires Auth)
+| DELETE /items/{item_id}/criteria/{crit_id}: Delete a score                 - [need to be checked/improved] (Requires Auth)
 |
 */
 
