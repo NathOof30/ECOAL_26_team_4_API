@@ -56,6 +56,11 @@ class CollectionsController extends Controller
      */
     public function update(Request $request, Collection $collection)
     {
+        // Enforce ownership: only the owner can update the collection
+        if ($collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only update your own collection.'], 403);
+        }
+
         // Validate incoming data
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -69,8 +74,13 @@ class CollectionsController extends Controller
     /**
      * Remove the specified collection.
      */
-    public function destroy(Collection $collection)
+    public function destroy(Request $request, Collection $collection)
     {
+        // Enforce ownership: only the owner can delete the collection
+        if ($collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only delete your own collection.'], 403);
+        }
+
         $collection->delete();
         return response()->json(null, 204);
     }

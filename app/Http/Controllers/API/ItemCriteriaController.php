@@ -31,6 +31,13 @@ class ItemCriteriaController extends Controller
             'value' => 'required|integer|in:0,1,2',
         ]);
 
+        $item = Item::findOrFail($validated['id_item']);
+
+        // Enforce ownership: only the owner of the item can add a score to it
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only score items in your own collection.'], 403);
+        }
+
         $score = ItemCriteria::create($validated);
         return response()->json($score->load(['item', 'criteria']), 201);
     }
@@ -52,6 +59,11 @@ class ItemCriteriaController extends Controller
      */
     public function update(Request $request, Item $item, Criteria $criterion)
     {
+        // Enforce ownership: only the owner of the item can update its score
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only update scores for items in your own collection.'], 403);
+        }
+
         // Validate the new value
         $validated = $request->validate([
             'value' => 'required|integer|in:0,1,2',
@@ -69,8 +81,13 @@ class ItemCriteriaController extends Controller
     /**
      * Remove a criteria score for an item.
      */
-    public function destroy(Item $item, Criteria $criterion)
+    public function destroy(Request $request, Item $item, Criteria $criterion)
     {
+        // Enforce ownership: only the owner of the item can delete its score
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only delete scores from items in your own collection.'], 403);
+        }
+
         ItemCriteria::where('id_item', $item->id)
                     ->where('id_criteria', $criterion->id_criteria)
                     ->delete();

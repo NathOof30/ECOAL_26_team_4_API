@@ -62,6 +62,11 @@ class ItemsController extends Controller
      */
     public function update(Request $request, Item $item)
     {
+        // Enforce ownership: only the owner of the collection can update the item
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only update items in your own collection.'], 403);
+        }
+
         // Validate incoming data
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -80,8 +85,13 @@ class ItemsController extends Controller
     /**
      * Remove the specified item.
      */
-    public function destroy(Item $item)
+    public function destroy(Request $request, Item $item)
     {
+        // Enforce ownership: only the owner of the collection can delete the item
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only delete items from your own collection.'], 403);
+        }
+
         $item->delete();
         return response()->json(null, 204);
     }
