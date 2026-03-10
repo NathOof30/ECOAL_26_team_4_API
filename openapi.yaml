@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: ECOAL API
   version: 1.0.0
-  description: Initial OpenAPI contract for the ECOAL authentication endpoints.
+  description: OpenAPI contract for the ECOAL API.
 servers:
   - url: http://127.0.0.1:8000
 paths:
@@ -16,6 +16,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: New User
+              email: newuser@example.com
+              password: StrongPass1!
+              password_confirmation: StrongPass1!
+              avatar_url: null
+              nationality: PT
       responses:
         '201':
           description: User registered
@@ -23,6 +30,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthSuccessResponse'
+              example:
+                data:
+                  access_token: 1|exampletoken
+                  token_type: Bearer
+                  user:
+                    id: 10
+                    name: New User
+                    email: newuser@example.com
+                    avatar_url: null
+                    nationality: PT
+                    is_active: true
+                    user_type: user
+                    collection: null
         '422':
           description: Validation error
           content:
@@ -39,6 +59,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: test@example.com
+              password: password
       responses:
         '200':
           description: Login success
@@ -46,6 +69,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthSuccessResponse'
+              example:
+                data:
+                  access_token: 1|exampletoken
+                  token_type: Bearer
+                  user:
+                    id: 1
+                    name: Test User
+                    email: test@example.com
+                    avatar_url: null
+                    nationality: null
+                    is_active: true
+                    user_type: user
+                    collection:
+                      id: 1
+                      title: My First Collection
+                      description: Test description
+                      user_id: 1
         '401':
           description: Invalid credentials
           content:
@@ -68,6 +108,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ForgotPasswordRequest'
+            example:
+              email: test@example.com
       responses:
         '200':
           description: Reset link sent
@@ -75,6 +117,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+              example:
+                data:
+                  message: We have emailed your password reset link.
         '400':
           description: Reset link could not be sent
           content:
@@ -91,6 +136,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResetPasswordRequest'
+            example:
+              email: test@example.com
+              token: RESET_TOKEN
+              password: NewStrongPass1!
+              password_confirmation: NewStrongPass1!
       responses:
         '200':
           description: Password reset completed
@@ -98,6 +148,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+              example:
+                data:
+                  message: Your password has been reset.
         '400':
           description: Invalid or expired token
           content:
@@ -123,6 +176,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
+              example:
+                data:
+                  message: Successfully logged out
         '401':
           description: Unauthenticated
           content:
@@ -146,8 +202,1093 @@ paths:
                   data:
                     $ref: '#/components/schemas/User'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  name: Test User
+                  email: test@example.com
+                  avatar_url: null
+                  nationality: null
+                  is_active: true
+                  user_type: user
+                  collection:
+                    id: 1
+                    title: My First Collection
+                    description: Test description
+                    user_id: 1
         '401':
           description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List public user profiles
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: nationality
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, name, nationality]
+      responses:
+        '200':
+          description: Paginated public users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublicCollectionResponse'
+              example:
+                data:
+                  - id: 1
+                    name: Test User
+                    avatar_url: null
+                    nationality: PT
+                    collection:
+                      id: 1
+                      title: Alpha
+                      description: Public collection
+                      user_id: 1
+                links:
+                  first: http://127.0.0.1:8000/api/users?page=1
+                  last: http://127.0.0.1:8000/api/users?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [Users]
+      summary: Create a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateUserRequest'
+            example:
+              name: Editor User
+              email: editor@example.com
+              password: StrongPass1!
+              password_confirmation: StrongPass1!
+              user_type: editor
+              is_active: true
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+  /api/users/{user}:
+    get:
+      tags: [Users]
+      summary: Show a public user profile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: Public user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserPublic'
+                required: [data]
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Users]
+      summary: Update a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+    patch:
+      tags: [Users]
+      summary: Partially update a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/User'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+    delete:
+      tags: [Users]
+      summary: Delete a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '204':
+          description: User deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/collections:
+    get:
+      tags: [Collections]
+      summary: List collections
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, title, user_id]
+      responses:
+        '200':
+          description: Paginated collections
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionCollectionResponse'
+              example:
+                data:
+                  - id: 1
+                    title: Alpha
+                    description: First collection
+                    user_id: 1
+                    user:
+                      id: 1
+                      name: Test User
+                      avatar_url: null
+                      nationality: PT
+                    items: []
+                links:
+                  first: http://127.0.0.1:8000/api/collections?page=1
+                  last: http://127.0.0.1:8000/api/collections?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [Collections]
+      summary: Create the authenticated user's collection
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionWriteRequest'
+            example:
+              title: My First Collection
+              description: Test description
+      responses:
+        '201':
+          description: Collection created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+  /api/collections/{collection}:
+    get:
+      tags: [Collections]
+      summary: Show a collection
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      responses:
+        '200':
+          description: Collection detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+                required: [data]
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Collections]
+      summary: Update a collection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionWriteRequest'
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Collections]
+      summary: Partially update a collection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionWriteRequest'
+      responses:
+        '200':
+          description: Collection updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Collection'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Collections]
+      summary: Delete a collection
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CollectionId'
+      responses:
+        '204':
+          description: Collection deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, title]
+      responses:
+        '200':
+          description: Paginated categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryCollectionResponse'
+              example:
+                data:
+                  - id: 1
+                    title: Test Category
+                links:
+                  first: http://127.0.0.1:8000/api/categories?page=1
+                  last: http://127.0.0.1:8000/api/categories?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [Categories]
+      summary: Create a category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Category'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/categories/{category}:
+    get:
+      tags: [Categories]
+      summary: Show a category
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Category detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Category'
+                required: [data]
+    put:
+      tags: [Categories]
+      summary: Update a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Category'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Categories]
+      summary: Partially update a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryWriteRequest'
+      responses:
+        '200':
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Category'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Categories]
+      summary: Delete a category
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '204':
+          description: Category deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/criteria:
+    get:
+      tags: [Criteria]
+      summary: List criteria
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id_criteria, name]
+      responses:
+        '200':
+          description: Paginated criteria
+          content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriaCollectionResponse'
+              example:
+                data:
+                  - id_criteria: 1
+                    name: Test Criterion
+                links:
+                  first: http://127.0.0.1:8000/api/criteria?page=1
+                  last: http://127.0.0.1:8000/api/criteria?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [Criteria]
+      summary: Create a criterion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriaWriteRequest'
+      responses:
+        '201':
+          description: Criterion created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Criteria'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/criteria/{criterion}:
+    get:
+      tags: [Criteria]
+      summary: Show a criterion
+      parameters:
+        - $ref: '#/components/parameters/CriterionId'
+      responses:
+        '200':
+          description: Criterion detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Criteria'
+                required: [data]
+    put:
+      tags: [Criteria]
+      summary: Update a criterion
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CriterionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriaWriteRequest'
+      responses:
+        '200':
+          description: Criterion updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Criteria'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Criteria]
+      summary: Partially update a criterion
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CriterionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriteriaWriteRequest'
+      responses:
+        '200':
+          description: Criterion updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Criteria'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Criteria]
+      summary: Delete a criterion
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CriterionId'
+      responses:
+        '204':
+          description: Criterion deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/items:
+    get:
+      tags: [Items]
+      summary: List items
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: collection_id
+          in: query
+          schema:
+            type: integer
+        - name: category1_id
+          in: query
+          schema:
+            type: integer
+        - name: category2_id
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: boolean
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id, title, collection_id, created_at]
+      responses:
+        '200':
+          description: Paginated items
+          content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCollectionResponse'
+              example:
+                data:
+                  - id: 1
+                    title: My First Item
+                    description: A shiny new item
+                    image_url: null
+                    status: true
+                    collection_id: 1
+                    category1_id: 1
+                    category2_id: null
+                    collection:
+                      id: 1
+                      title: My First Collection
+                      description: Test description
+                      user_id: 1
+                    category1:
+                      id: 1
+                      title: Test Category
+                    category2: null
+                    criteria: []
+                links:
+                  first: http://127.0.0.1:8000/api/items?page=1
+                  last: http://127.0.0.1:8000/api/items?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [Items]
+      summary: Create an item in the authenticated user's collection
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemWriteRequest'
+            example:
+              title: My First Item
+              description: A shiny new item
+              status: true
+              category1_id: 1
+              category2_id: null
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+  /api/items/{item}:
+    get:
+      tags: [Items]
+      summary: Show an item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '200':
+          description: Item detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+                required: [data]
+    put:
+      tags: [Items]
+      summary: Update an item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemWriteRequest'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags: [Items]
+      summary: Partially update an item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemWriteRequest'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Item'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Items]
+      summary: Delete an item
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+      responses:
+        '204':
+          description: Item deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/item-criteria:
+    get:
+      tags: [ItemCriteria]
+      summary: List item scores
+      parameters:
+        - $ref: '#/components/parameters/PerPage'
+        - $ref: '#/components/parameters/Direction'
+        - name: id_item
+          in: query
+          schema:
+            type: integer
+        - name: id_criteria
+          in: query
+          schema:
+            type: integer
+        - name: value
+          in: query
+          schema:
+            type: integer
+            enum: [0, 1, 2]
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [id_item, id_criteria, value]
+      responses:
+        '200':
+          description: Paginated item scores
+          content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCriteriaCollectionResponse'
+              example:
+                data:
+                  - id_item: 1
+                    id_criteria: 1
+                    value: 2
+                    item:
+                      id: 1
+                      title: My First Item
+                      description: A shiny new item
+                      image_url: null
+                      status: true
+                      collection_id: 1
+                      category1_id: 1
+                      category2_id: null
+                    criteria:
+                      id_criteria: 1
+                      name: Test Criterion
+                links:
+                  first: http://127.0.0.1:8000/api/item-criteria?page=1
+                  last: http://127.0.0.1:8000/api/item-criteria?page=1
+                  prev: null
+                  next: null
+                meta:
+                  current_page: 1
+                  per_page: 15
+                  total: 1
+    post:
+      tags: [ItemCriteria]
+      summary: Create a score for an item and criterion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCriteriaWriteRequest'
+            example:
+              id_item: 1
+              id_criteria: 1
+              value: 2
+      responses:
+        '201':
+          description: Score created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ItemCriteria'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Duplicate score
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/items/{item}/criteria:
+    get:
+      tags: [ItemCriteria]
+      summary: List scores for a specific item
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated scores for the item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemCriteriaCollectionResponse'
+  /api/items/{item}/criteria/{criterion}:
+    put:
+      tags: [ItemCriteria]
+      summary: Update a score value
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+        - $ref: '#/components/parameters/CriterionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCriteriaUpdateRequest'
+            example:
+              value: 1
+      responses:
+        '200':
+          description: Score updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ItemCriteria'
+                required: [data]
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [ItemCriteria]
+      summary: Delete a score
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ItemId'
+        - $ref: '#/components/parameters/CriterionId'
+      responses:
+        '204':
+          description: Score deleted
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Score not found
           content:
             application/json:
               schema:
@@ -158,6 +1299,50 @@ components:
       type: http
       scheme: bearer
       bearerFormat: Token
+  parameters:
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+    Direction:
+      name: direction
+      in: query
+      schema:
+        type: string
+        enum: [asc, desc]
+    UserId:
+      name: user
+      in: path
+      required: true
+      schema:
+        type: integer
+    CollectionId:
+      name: collection
+      in: path
+      required: true
+      schema:
+        type: integer
+    CategoryId:
+      name: category
+      in: path
+      required: true
+      schema:
+        type: integer
+    ItemId:
+      name: item
+      in: path
+      required: true
+      schema:
+        type: integer
+    CriterionId:
+      name: criterion
+      in: path
+      required: true
+      schema:
+        type: integer
   schemas:
     RegisterRequest:
       type: object
@@ -180,6 +1365,32 @@ components:
         nationality:
           type: string
           nullable: true
+    AdminCreateUserRequest:
+      type: object
+      required: [name, email, password, password_confirmation]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        password_confirmation:
+          type: string
+          format: password
+        avatar_url:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        user_type:
+          type: string
+          enum: [admin, editor, user]
     LoginRequest:
       type: object
       required: [email, password]
@@ -212,6 +1423,85 @@ components:
         password_confirmation:
           type: string
           format: password
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        password_confirmation:
+          type: string
+          format: password
+        avatar_url:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        user_type:
+          type: string
+          enum: [admin, editor, user]
+    CollectionWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+    CategoryWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+    CriteriaWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    ItemWriteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        status:
+          type: boolean
+        category1_id:
+          type: integer
+        category2_id:
+          type: integer
+          nullable: true
+    ItemCriteriaWriteRequest:
+      type: object
+      required: [id_item, id_criteria, value]
+      properties:
+        id_item:
+          type: integer
+        id_criteria:
+          type: integer
+        value:
+          type: integer
+          enum: [0, 1, 2]
+    ItemCriteriaUpdateRequest:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: integer
+          enum: [0, 1, 2]
     AuthSuccessResponse:
       type: object
       properties:
@@ -245,6 +1535,9 @@ components:
         status:
           type: integer
       required: [message, status]
+      example:
+        message: Forbidden.
+        status: 403
     ValidationErrorResponse:
       type: object
       properties:
@@ -259,6 +1552,12 @@ components:
             items:
               type: string
       required: [message, status, errors]
+      example:
+        message: The given data was invalid.
+        status: 422
+        errors:
+          email:
+            - The email field is required.
     User:
       type: object
       properties:
@@ -280,3 +1579,237 @@ components:
         user_type:
           type: string
           enum: [admin, editor, user]
+        collection:
+          $ref: '#/components/schemas/CollectionSummary'
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+        collection:
+          $ref: '#/components/schemas/CollectionSummary'
+    UserPublicSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        nationality:
+          type: string
+          nullable: true
+    Collection:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        user_id:
+          type: integer
+        user:
+          $ref: '#/components/schemas/UserPublicSummary'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemSummary'
+    CollectionSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        user_id:
+          type: integer
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+    Criteria:
+      type: object
+      properties:
+        id_criteria:
+          type: integer
+        name:
+          type: string
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        status:
+          type: boolean
+          nullable: true
+        collection_id:
+          type: integer
+        category1_id:
+          type: integer
+        category2_id:
+          type: integer
+          nullable: true
+        collection:
+          $ref: '#/components/schemas/CollectionSummary'
+        category1:
+          $ref: '#/components/schemas/Category'
+        category2:
+          $ref: '#/components/schemas/Category'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/Criteria'
+    ItemSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        image_url:
+          type: string
+          nullable: true
+        status:
+          type: boolean
+          nullable: true
+        collection_id:
+          type: integer
+        category1_id:
+          type: integer
+        category2_id:
+          type: integer
+          nullable: true
+    ItemCriteria:
+      type: object
+      properties:
+        id_item:
+          type: integer
+        id_criteria:
+          type: integer
+        value:
+          type: integer
+          enum: [0, 1, 2]
+        item:
+          $ref: '#/components/schemas/ItemSummary'
+        criteria:
+          $ref: '#/components/schemas/Criteria'
+    PaginationLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          nullable: true
+        last:
+          type: string
+          nullable: true
+        prev:
+          type: string
+          nullable: true
+        next:
+          type: string
+          nullable: true
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+    UserPublicCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPublic'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    CollectionCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Collection'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    CategoryCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    CriteriaCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Criteria'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    ItemCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    ItemCriteriaCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemCriteria'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
