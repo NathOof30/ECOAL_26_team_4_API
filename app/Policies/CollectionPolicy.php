@@ -10,7 +10,7 @@ class CollectionPolicy
 {
     public function create(User $user): bool
     {
-        return $user->is_active;
+        return (bool) $user->is_active;
     }
 
     public function update(User $user, Collection $collection): Response
