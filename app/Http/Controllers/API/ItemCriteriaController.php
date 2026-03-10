@@ -8,6 +8,7 @@ use App\Http\Requests\ItemCriteria\UpdateItemCriteriaRequest;
 use App\Models\ItemCriteria;
 use App\Models\Item;
 use App\Models\Criteria;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 
 class ItemCriteriaController extends Controller
@@ -35,9 +36,7 @@ class ItemCriteriaController extends Controller
             ->exists();
 
         if ($alreadyExists) {
-            return response()->json([
-                'message' => 'A score already exists for this item and criterion.',
-            ], 409);
+            return ApiResponse::error('A score already exists for this item and criterion.', 409);
         }
 
         $score = ItemCriteria::create($validated);

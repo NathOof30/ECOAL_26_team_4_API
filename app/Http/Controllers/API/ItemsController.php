@@ -7,6 +7,7 @@ use App\Http\Requests\Items\StoreItemRequest;
 use App\Http\Requests\Items\UpdateItemRequest;
 use App\Models\Item;
 use App\Models\Collection;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 
 class ItemsController extends Controller
@@ -30,7 +31,7 @@ class ItemsController extends Controller
         $collection = Collection::where('user_id', $request->user()->id)->first();
 
         if (!$collection) {
-            return response()->json(['message' => 'You must create a collection first before adding items.'], 403);
+            return ApiResponse::error('You must create a collection first before adding items.', 403);
         }
 
         // Validate incoming data (collection_id is no longer needed in the request)

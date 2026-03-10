@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Collections\StoreCollectionRequest;
 use App\Http\Requests\Collections\UpdateCollectionRequest;
 use App\Models\Collection;
+use App\Support\ApiResponse;
 use Illuminate\Http\Request;
 
 class CollectionsController extends Controller
@@ -27,7 +28,7 @@ class CollectionsController extends Controller
     {
         // Enforce maximum of 1 collection per user
         if ($request->user()->collection) {
-            return response()->json(['message' => 'User already has a collection.'], 403);
+            return ApiResponse::error('User already has a collection.', 403);
         }
 
         $validated = $request->validated();

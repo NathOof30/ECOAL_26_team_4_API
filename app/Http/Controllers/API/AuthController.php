@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Support\ApiResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,9 +45,7 @@ class AuthController extends Controller
         $credentials = ['email' => $validated['email'], 'password' => $validated['password']];
 
         if (! Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Invalid login details'
-            ], 401);
+            return ApiResponse::error('Invalid login details', 401);
         }
 
         $user = User::where('email', $credentials['email'])->firstOrFail();
@@ -54,9 +53,7 @@ class AuthController extends Controller
         if (! $user->is_active) {
             Auth::logout();
 
-            return response()->json([
-                'message' => 'This account is inactive.',
-            ], 403);
+            return ApiResponse::error('This account is inactive.', 403);
         }
 
         RateLimiter::clear($credentials['email'].'|'.$request->ip());
