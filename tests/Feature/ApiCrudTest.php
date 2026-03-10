@@ -111,7 +111,7 @@ class ApiCrudTest extends TestCase
         $itemResponse = $this->postJson('/api/items', [
             'title' => 'My First Item',
             'description' => 'A shiny new item',
-            'status' => true,
+            'status' => false,
             'category1_id' => $this->category->id,
         ]);
         
@@ -125,8 +125,7 @@ class ApiCrudTest extends TestCase
             'id_criteria' => $this->criteria->id_criteria,
             'value' => 2,
         ]);
-        
-        file_put_contents('dump.json', $scoreResponse->getContent());
+
         $scoreResponse->assertStatus(201);
 
         // 4. Read the scores for this item back via public route

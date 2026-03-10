@@ -1,0 +1,79 @@
+Original Object Collection Web Application
+1. Description of the Project
+In this project, you will design and develop a full-stack web application dedicated to an original collection of objects. The theme of the collection is entirely open (nature, culture, science, art, everyday objects, digital artifacts, etc.), but your project must respect both conceptual and technical constraints.
+
+Conceptual Constraints
+Classification Requirement
+All objects in your collection must be clearly categorized in one or two categories.
+You must:
+
+Define a logical and coherent classification system.
+Explain the principle behind your categories.
+Ensure that each object belongs to at least one category.
+Categories may be based on origin, function, material, historical period, geographic area, style, scientific properties, or any coherent system related to your theme.
+
+Evaluation Requirement
+Each object must be evaluated and comparable using 3 or 4 clearly defined criteria. The criteria must:
+
+Be measurable or observable.
+Apply consistently to every object.
+Allow meaningful comparison between objects.
+Be stored in the database in a structured way.
+This structure transforms a simple collection into a scientific and analytical system, allowing comparison and deeper understanding.
+
+2. Example of a collection: World Sands (Arenophily)
+Collection theme: Sands from around the world.
+
+Classification:
+
+By geological origin (volcanic, coral, desert, glacial, etc.), or
+By geographic origin (continent, country, specific site).
+Evaluation criteria:
+
+Grain size (granulometry)
+Grain shape
+Mineralogical richness
+3. Requirements
+The goal is to transform the idea of a personal collection into a structured, secure, multi-user digital platform that enables classification, evaluation, and meaningful comparison of objects.
+
+Your collection theme must be original and intellectually meaningful. The objective of this project is to design a structured system of classification and evaluation. Therefore, themes that are too common, overused are not allowed.
+The following types of collections are strictly forbidden:
+
+Music collections (songs, albums, artists)
+Movie or TV show collections
+Video game collections
+Pokémon or similar franchise-based character collections
+Examples of acceptable directions:
+
+Types of clouds and their meteorological characteristics
+Architectural doors around the world
+Teas categorized by fermentation process
+Street lamps by design period
+Historical writing tools
+Traditional spices categorized by origin and aromatic intensity
+Since collections are very specific, each user registered in the web wite owns only one collection. Object of a collection can be private or public.
+
+4. Origin server application
+This is the backend of your application. The aim of this part is to manage data throw a RESTful API, using Laravel Based on the HTTP protocol, data will be accessed or modified by a predetermined set of operations corresponding to HTTP methods. See the Backend page for more details
+
+Data are stored in a SQLite database. This is a single file on disk that contains the whole database. SQLite understands most of the standard SQL language.
+
+The database structure is to be defined by you. It must clearly represent: Users, Collections, Objects, Categories, Criteria.
+
+Don't forget to define: Primary keys and foreign keys, Relationships, Proper migrations and constraints.
+
+Your Laravel application must
+
+provide a RESTful API
+Implement authentification (sanctum)
+Secure routes using middleware
+Implement CRUD operations for users, collections, objects...
+5. User agent application
+This is the user interface of your application. This part will be written with React.js. You have to develop several pages and your application will contain at least:
+
+A home page: with the title of your app and lead collections for example.
+A Collection detail page
+Filtering and sorting by criteria
+Collection managment (Create / edit / delete) with a dashboard.
+6. Design and CSS
+The graphic identity is free but must be coherent with the theme of the collections and demonstrate thoughtful UX/UI design.

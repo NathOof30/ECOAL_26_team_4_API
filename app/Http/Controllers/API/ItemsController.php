@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Collection;
+use App\Models\Criteria;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ItemsController extends Controller
 {
@@ -35,11 +37,17 @@ class ItemsController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image_url' => 'nullable|string|max:255',
+            'image_url' => 'nullable|url|max:255',
             'status' => 'nullable|boolean',
             'category1_id' => 'required|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
+            'category2_id' => 'nullable|exists:category,id|different:category1_id',
         ]);
+
+        if (($validated['status'] ?? false) === true) {
+            return response()->json([
+                'message' => 'An item cannot be public at creation time. Add criteria scores first, then publish it.',
+            ], 422);
+        }
 
         // Automatically assign the user's collection
         $validated['collection_id'] = $collection->id;
@@ -72,12 +80,22 @@ class ItemsController extends Controller
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
-            'image_url' => 'nullable|string|max:255',
+            'image_url' => 'nullable|url|max:255',
             'status' => 'sometimes|boolean',
-            'collection_id' => 'sometimes|exists:collections,id',
             'category1_id' => 'sometimes|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
+            'category2_id' => 'nullable|exists:category,id|different:category1_id',
         ]);
+
+        if (array_key_exists('status', $validated) && $validated['status'] === true) {
+            $requiredCriteriaCount = Criteria::count();
+            $itemCriteriaCount = $item->criteria()->count();
+
+            if ($itemCriteriaCount < $requiredCriteriaCount) {
+                return response()->json([
+                    'message' => 'This item cannot be published yet. All criteria scores must be set first.',
+                ], 422);
+            }
+        }
 
         $item->update($validated);
         return response()->json($item->load(['category1', 'category2']));
@@ -95,5 +113,51 @@ class ItemsController extends Controller
 
         $item->delete();
         return response()->json(null, 204);
+    }
+
+    /**
+     * Upload and assign an image to an item owned by the authenticated user.
+     */
+    public function uploadImage(Request $request, Item $item)
+    {
+        if ($item->collection->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized. You can only upload images for items in your own collection.'], 403);
+        }
+
+        $validated = $request->validate([
+            'image' => 'required|file|image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        if (!empty($item->image_url)) {
+            $oldPath = $this->storagePathFromPublicUrl($item->image_url);
+            if ($oldPath && Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
+        }
+
+        $path = $validated['image']->store('items', 'public');
+        $url = Storage::url($path);
+
+        $item->update([
+            'image_url' => $url,
+        ]);
+
+        return response()->json([
+            'message' => 'Item image uploaded successfully.',
+            'image_url' => $url,
+        ]);
+    }
+
+    /**
+     * Convert a public storage URL into a disk path.
+     */
+    private function storagePathFromPublicUrl(string $url): ?string
+    {
+        $prefix = '/storage/';
+        if (str_starts_with($url, $prefix)) {
+            return substr($url, strlen($prefix));
+        }
+
+        return null;
     }
 }

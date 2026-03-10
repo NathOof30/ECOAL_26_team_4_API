@@ -55,4 +55,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(Collection::class);
     }
+
+    /**
+     * Check whether the user has administrator privileges.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->user_type === 'admin';
+    }
 }

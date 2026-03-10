@@ -91,12 +91,23 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    Route::post('/user/avatar', [UsersController::class, 'uploadAvatar']);
+
+    Route::post('items/{item}/image', [ItemsController::class, 'uploadImage']);
+
     // Protected writing (POST, PUT, DELETE)
-    Route::apiResource('users', UsersController::class)->except(['index', 'show']);
+    Route::post('users', [UsersController::class, 'store'])->middleware('admin');
+    Route::put('users/{user}', [UsersController::class, 'update']);
+    Route::patch('users/{user}', [UsersController::class, 'update']);
+    Route::delete('users/{user}', [UsersController::class, 'destroy']);
+
     Route::apiResource('collections', CollectionsController::class)->except(['index', 'show']);
-    Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
     Route::apiResource('items', ItemsController::class)->except(['index', 'show']);
-    Route::apiResource('criteria', CriteriaController::class)->except(['index', 'show']);
+
+    Route::middleware('admin')->group(function () {
+        Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
+        Route::apiResource('criteria', CriteriaController::class)->except(['index', 'show']);
+    });
 
     // Scores - Protected writing
     Route::post('item-criteria', [ItemCriteriaController::class, 'store']);

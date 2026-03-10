@@ -18,13 +18,14 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6', // Add confirmed rule if using password_confirmation
+            'password' => 'required|string|min:8',
             'avatar_url' => 'nullable|string|max:255',
             'nationality' => 'nullable|string|max:255',
-            'user_type' => 'nullable|string|in:admin,editor,user',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['user_type'] = 'user';
+        $validated['is_active'] = true;
 
         $user = User::create($validated);
 
@@ -56,6 +57,12 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->firstOrFail();
 
+        if (!$user->is_active) {
+            return response()->json([
+                'message' => 'Your account is inactive.',
+            ], 403);
+        }
+
         // Optional: Revoke existing tokens for a single-device login
         // $user->tokens()->delete();
 
@@ -74,7 +81,10 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         // Require the user to be authenticated to logout
-        $request->user()->currentAccessToken()->delete();
+        $token = $request->user()->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
 
         return response()->json([
             'message' => 'Successfully logged out'

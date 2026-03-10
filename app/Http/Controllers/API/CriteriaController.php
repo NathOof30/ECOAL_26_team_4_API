@@ -24,7 +24,7 @@ class CriteriaController extends Controller
     {
         // Validate incoming data
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:criteria,name',
         ]);
 
         $criterion = Criteria::create($validated);
@@ -46,7 +46,7 @@ class CriteriaController extends Controller
     {
         // Validate incoming data
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'name' => 'sometimes|string|max:255|unique:criteria,name,' . $criterion->id_criteria . ',id_criteria',
         ]);
 
         $criterion->update($validated);
