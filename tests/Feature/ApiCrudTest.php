@@ -65,6 +65,39 @@ class ApiCrudTest extends TestCase
                  ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']]);
     }
 
+    public function test_versioned_login_endpoint_is_available()
+    {
+        $response = $this->postJson('/api/v1/login', [
+            'email' => 'test@example.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']]);
+    }
+
+    public function test_register_is_rate_limited()
+    {
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $response = $this->postJson('/api/v1/register', [
+                'name' => 'Rate Limited User',
+                'email' => 'rate-limit@example.com',
+                'password' => 'StrongPass1!',
+                'password_confirmation' => 'StrongPass1!',
+            ]);
+
+            $this->assertContains($response->status(), [201, 422]);
+        }
+
+        $this->postJson('/api/v1/register', [
+            'name' => 'Rate Limited User',
+            'email' => 'rate-limit@example.com',
+            'password' => 'StrongPass1!',
+            'password_confirmation' => 'StrongPass1!',
+        ])->assertStatus(429)
+            ->assertJson(['message' => 'Too many requests.']);
+    }
+
     public function test_user_can_request_password_reset_link()
     {
         $response = $this->postJson('/api/forgot-password', [
@@ -79,6 +112,22 @@ class ApiCrudTest extends TestCase
         $this->assertDatabaseHas('password_reset_tokens', [
             'email' => 'test@example.com',
         ]);
+    }
+
+    public function test_forgot_password_is_rate_limited()
+    {
+        config()->set('auth.passwords.users.throttle', 0);
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $this->postJson('/api/v1/forgot-password', [
+                'email' => 'test@example.com',
+            ])->assertStatus(200);
+        }
+
+        $this->postJson('/api/v1/forgot-password', [
+            'email' => 'test@example.com',
+        ])->assertStatus(429)
+            ->assertJson(['message' => 'Too many requests.']);
     }
 
     public function test_user_can_reset_password_with_valid_token()
@@ -99,6 +148,19 @@ class ApiCrudTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'NewStrongPass1!',
         ])->assertStatus(200);
+    }
+
+    public function test_reset_password_fails_with_invalid_token()
+    {
+        $response = $this->postJson('/api/v1/reset-password', [
+            'email' => 'test@example.com',
+            'token' => 'invalid-token',
+            'password' => 'NewStrongPass1!',
+            'password_confirmation' => 'NewStrongPass1!',
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson(['message' => __(Password::INVALID_TOKEN)]);
     }
 
     public function test_authenticated_user_can_get_profile()
