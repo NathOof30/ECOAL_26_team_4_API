@@ -89,6 +89,8 @@ This API now uses three layers:
 | --- | --- | --- |
 | `POST /api/register` | Public | `RegisterRequest` |
 | `POST /api/login` | Public | `throttle:login` + `LoginRequest` |
+| `POST /api/forgot-password` | Public | `ForgotPasswordRequest` |
+| `POST /api/reset-password` | Public | `ResetPasswordRequest` |
 | `GET /api/users` | Public | None |
 | `GET /api/users/{user}` | Public | None |
 | `GET /api/collections` | Public | None |
@@ -197,6 +199,36 @@ Examples:
 - `GET /api/collections?user_id=1&sort=title&direction=desc`
 - `GET /api/items?collection_id=2&category1_id=1&status=true`
 - `GET /api/item-criteria?id_item=5&sort=id_criteria&direction=asc`
+
+## Password reset flow
+
+1. `POST /api/forgot-password` with the user email
+2. Read the reset token from the email payload
+3. `POST /api/reset-password` with `email`, `token`, `password`, and `password_confirmation`
+
+Forgot password example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/forgot-password \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com"}'
+```
+
+Reset password example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/reset-password \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","token":"RESET_TOKEN","password":"NewStrongPass1!","password_confirmation":"NewStrongPass1!"}'
+```
+
+In local development, the token is sent by the configured mailer. For an API-only client, use the token returned in the reset email content.
+
+## OpenAPI
+
+A starter OpenAPI spec for the authentication endpoints is available in [openapi.yaml](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/openapi.yaml).
 
 ## Audit logs
 
