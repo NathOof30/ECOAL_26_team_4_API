@@ -48,6 +48,8 @@ Production-oriented settings to review before deploy:
 - mailer credentials
 - `SANCTUM_STATEFUL_DOMAINS`
 - `SANCTUM_TOKEN_EXPIRATION` if token lifetime should be enforced
+- `AUTH_REVOKE_EXISTING_TOKENS_ON_LOGIN` if single-session login should be enforced
+- CORS settings such as `CORS_ALLOWED_ORIGINS`
 
 ### Documentation access
 
@@ -59,8 +61,21 @@ Production-oriented settings to review before deploy:
 ### API versioning
 
 - the canonical base path is `/api/v1`
-- legacy unversioned `/api/...` routes are still available temporarily for backward compatibility
+- legacy unversioned `/api/...` routes are disabled by default
+- legacy compatibility can be re-enabled explicitly with `API_LEGACY_ROUTES_ENABLED=true`
 - new clients should integrate only against `/api/v1`
+
+### Operational endpoints
+
+- `GET /health/live` returns a lightweight liveness response
+- `GET /health/ready` checks database readiness and returns `503` on failure
+
+### CORS and token policy
+
+- CORS is configured through [config/cors.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/config/cors.php)
+- allowed origins should be restricted per environment through `CORS_ALLOWED_ORIGINS`
+- token expiration is configurable via `SANCTUM_TOKEN_EXPIRATION`
+- login-time revocation of existing tokens is configurable via `AUTH_REVOKE_EXISTING_TOKENS_ON_LOGIN`
 
 ### Run tests
 
