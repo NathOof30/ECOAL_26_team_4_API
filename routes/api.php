@@ -54,7 +54,8 @@ $registerApiRoutes = function (): void {
     });
 };
 
-Route::prefix('v1')->name('v1.')->group($registerApiRoutes);
+Route::prefix(config('api.version'))->name(config('api.version').'.')->group($registerApiRoutes);
 
-// Temporary compatibility layer while clients migrate to /api/v1.
-$registerApiRoutes();
+if (config('api.legacy_routes_enabled')) {
+    $registerApiRoutes();
+}
