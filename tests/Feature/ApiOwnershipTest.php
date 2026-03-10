@@ -155,4 +155,72 @@ class ApiOwnershipTest extends TestCase
         $response->assertStatus(201);
         $this->assertEquals($this->collection1->id, $response->json('collection_id'));
     }
+
+    public function test_regular_user_cannot_update_other_user_profile()
+    {
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/users/' . $this->user2->id, [
+            'name' => 'Nope',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'Unauthorized. You can only update your own profile.']);
+    }
+
+    public function test_regular_user_cannot_escalate_own_role_or_active_flag()
+    {
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/users/' . $this->user1->id, [
+            'user_type' => 'admin',
+            'is_active' => false,
+            'name' => 'Updated User 1',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('name', 'Updated User 1')
+            ->assertJsonPath('user_type', 'user')
+            ->assertJsonPath('is_active', true);
+    }
+
+    public function test_admin_can_update_other_user_role()
+    {
+        $admin = User::create([
+            'name' => 'Admin',
+            'email' => 'admin@test.com',
+            'password' => bcrypt('password'),
+            'user_type' => 'admin',
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')->putJson('/api/users/' . $this->user1->id, [
+            'user_type' => 'editor',
+            'is_active' => false,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('user_type', 'editor')
+            ->assertJsonPath('is_active', false);
+    }
+
+    public function test_user_cannot_move_item_to_another_collection()
+    {
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/items/' . $this->item1->id, [
+            'collection_id' => $this->collection2->id,
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals($this->collection1->id, $response->json('collection_id'));
+    }
+
+    public function test_admin_cannot_delete_own_account_through_endpoint()
+    {
+        $admin = User::create([
+            'name' => 'Admin 2',
+            'email' => 'admin2@test.com',
+            'password' => bcrypt('password'),
+            'user_type' => 'admin',
+        ]);
+
+        $response = $this->actingAs($admin, 'sanctum')->deleteJson('/api/users/' . $admin->id);
+
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'You cannot delete your own account through this endpoint.']);
+    }
 }
