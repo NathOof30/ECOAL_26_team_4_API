@@ -1,0 +1,193 @@
+Tu es un assistant développeur. Objectif: créer DANS CE RÉPERTOIRE (repo Laravel existant) une mini app front de test d’API, sans style, ultra simple, rapide et fonctionnelle, pour tester toutes les routes API (auth + CRUD) listées ci-dessous.
+
+Contraintes
+- Pas de CSS / pas de libs UI.
+- Simple: 1 page, composants minimalistes, pas de routing.
+- Rapide/optimisé: Vanilla JS + Vite (pas React, pour minimiser le poids et accélérer).
+- L’app doit afficher clairement chaque requête faite (URL, méthode, headers, body) + réponse (status, JSON brut), et garder un log.
+- Gestion d’auth: token Sanctum en Bearer, persisté en localStorage (“remember” côté front).
+
+Contexte backend (IMPORTANT)
+- Backend: Laravel 12 + laravel/sanctum.
+- Base API: http://127.0.0.1:8000/api (modifiable via .env côté front).
+- Auth protégée: middleware auth:sanctum (token Bearer).
+- La colonne users.remember_token existe (migration) MAIS le backend fourni ici renvoie un access_token Sanctum. Le “remember” doit donc être fait via stockage local du token (localStorage), pas via cookies “remember me”.
+
+Headers à utiliser
+- Toujours: Accept: application/json
+- Si JSON: Content-Type: application/json
+- Si auth: Authorization: Bearer <access_token>
+
+Pré-requis (pour éviter les blocages)
+- Le backend utilise des tokens Bearer (Sanctum personal access tokens). Il n’y a PAS besoin de CSRF/cookies pour ces endpoints.
+- Si tu lances le front sur un autre port (Vite), assure-toi que le CORS backend autorise l’origine (sinon erreurs réseau).
+
+Routes à tester (préfixées automatiquement par /api)
+PUBLIC
+- POST /register
+- POST /login
+- GET  /users
+- GET  /users/{id}
+- GET  /collections
+- GET  /collections/{id}
+- GET  /categories
+- GET  /categories/{id}
+- GET  /items
+- GET  /items/{id}
+- GET  /criteria
+- GET  /criteria/{id}
+- GET  /item-criteria
+- GET  /items/{item_id}/criteria
+
+PROTÉGÉES (Bearer token requis)
+- POST   /logout
+- GET    /user
+- POST   /collections
+- PUT    /collections/{id}
+- DELETE /collections/{id}
+- POST   /categories
+- PUT    /categories/{id}
+- DELETE /categories/{id}
+- POST   /items
+- PUT    /items/{id}
+- DELETE /items/{id}
+- POST   /criteria
+- PUT    /criteria/{id}
+- DELETE /criteria/{id}
+- POST   /item-criteria
+- PUT    /items/{item_id}/criteria/{crit_id}
+- DELETE /items/{item_id}/criteria/{crit_id}
+
+Règles métier & payloads EXACTS (d’après le code)
+1) Auth
+- Register (POST /register) body JSON:
+  {
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "secret123",
+    "avatar_url": null,
+    "nationality": null,
+    "user_type": "user"
+  }
+  Réponse: { access_token, token_type: "Bearer", user }
+
+- Login (POST /login) body JSON:
+  { "email": "test@example.com", "password": "secret123" }
+  Réponse: { access_token, token_type: "Bearer", user }
+
+- Logout (POST /logout) sans body: invalide le currentAccessToken.
+- Me (GET /user): renvoie le user authentifié.
+
+2) Collections (1 collection max par user)
+- Créer (POST /collections) body JSON:
+  { "title": "Ma collection", "description": "..." }
+  Important: user_id est forcé côté backend.
+  Erreur attendue si déjà une collection: 403 { message: "User already has a collection." }
+
+- Update/Delete: autorisé uniquement si collection.user_id === user connecté.
+
+3) Categories
+- Table = "category" (singulier) ; champ: title.
+- Créer (POST /categories) body JSON: { "title": "Mécanisme: ..." }
+- Update (PUT /categories/{id}) body JSON: { "title": "..." }
+
+4) Criteria
+- Table = "criteria" ; PK = id_criteria (pas “id”).
+- Créer (POST /criteria) body JSON: { "name": "Durabilité" }
+- Update (PUT /criteria/{id}) body JSON: { "name": "..." }
+
+5) Items
+- Créer (POST /items) nécessite que l’utilisateur ait déjà une collection.
+  Si pas de collection: 403 { message: "You must create a collection first before adding items." }
+- Payload (POST /items) body JSON:
+  {
+    "title": "Zippo 1941 Replica",
+    "description": "…",
+    "image_url": null,
+    "status": false,
+    "category1_id": 1,
+    "category2_id": null
+  }
+  Important: collection_id est forcé côté backend à la collection du user.
+
+- Update/Delete: autorisé uniquement si item.collection.user_id === user connecté.
+
+6) Scores Item <-> Criteria (pivot item_criteria)
+- L’ajout d’un score est protégé + ownership: uniquement sur tes items.
+- Créer score (POST /item-criteria) body JSON:
+  { "id_item": 1, "id_criteria": 1, "value": 2 }
+  value ∈ {0,1,2}
+  Attention: id_criteria référence criteria.id_criteria.
+
+- Update score:
+  PUT /items/{item_id}/criteria/{criterion_id}
+  body: { "value": 0|1|2 }
+  où {criterion_id} correspond à Criteria.id_criteria.
+
+- Delete score:
+  DELETE /items/{item_id}/criteria/{criterion_id}
+
+Ce que la mini app front doit fournir (features)
+- Un champ “API base URL” (par défaut http://127.0.0.1:8000/api) + sauvegarde localStorage.
+- Un module “Auth”:
+  - Register form (name/email/password)
+  - Login form (email/password)
+  - Affiche token courant + bouton “Copy”
+  - Toggle “Remember token” (si activé: localStorage; sinon: mémoire)
+  - Boutons: GET /user, POST /logout, Clear token
+- Un module “Exploration”:
+  - Boutons GET pour lister: users, collections, categories, items, criteria, item-criteria
+  - Inputs “id” + boutons GET show: /users/{id}, /collections/{id}, /categories/{id}, /items/{id}, /criteria/{id}
+  - Input “item_id” + bouton GET /items/{item_id}/criteria
+- Un module “Écriture (protégé)”:
+  - Collections: create/update/delete (update/delete demandent l’id)
+  - Categories: create/update/delete
+  - Criteria: create/update/delete (attention id_criteria)
+  - Items: create/update/delete (create nécessite category1_id valide)
+  - Scores: create/update/delete (id_item + id_criteria + value)
+- Un module “Requête libre”:
+  - Méthode (GET/POST/PUT/DELETE), path relatif, body JSON, option “auth on/off”
+  - Affiche exactement la requête envoyée et la réponse.
+- Un “Log” en bas:
+  - Historique des N dernières requêtes (N configurable, ex 50)
+  - Chaque entrée: timestamp, method, url, status, durée (ms)
+  - Bouton “Clear log”
+
+Architecture demandée (simple)
+- Créer un dossier `front-test/` à la racine du repo.
+- Utiliser Vite (template vanilla) dans `front-test/`.
+- `front-test/.env` avec `VITE_API_BASE_URL=http://127.0.0.1:8000/api`
+- Un seul fichier `src/api.js` (ou ts) qui encapsule fetch:
+  - apiFetch(path, {method, body, auth}) -> { ok, status, durationMs, json, text }
+  - gère erreurs JSON/texte
+  - ajoute automatiquement headers + Authorization si token présent
+- UI minimaliste via HTML (forms + boutons) et rendu en DOM.
+
+Points d’attention / pièges à gérer
+- Toujours envoyer Accept: application/json, sinon Laravel peut renvoyer du HTML en erreur.
+- Si une route renvoie 204 (delete/logout), gérer “no content” sans tenter json().
+- Toujours afficher aussi la réponse brute (texte) si JSON invalide (utile en debug CORS/500).
+- IDs:
+  - category utilise id standard (`id`)
+  - criteria utilise `id_criteria`
+- Pour créer un item: il faut d’abord créer une collection (1 max/user) ET disposer d’au moins une category existante.
+- Pour les scores: il faut item existant + criterion existant.
+
+Livrables attendus
+- Le code complet du front dans `front-test/`.
+- Commandes de run:
+  - dans un terminal: `php artisan serve`
+  - dans un autre: `cd front-test && npm install && npm run dev`
+- Aucun style, mais lisible (utilise <pre> pour JSON).
+
+Option bonus (si rapide)
+- Un bouton “Scenario end-to-end” qui enchaîne:
+  - register (email aléatoire)
+  - login
+  - create collection
+  - create category (si besoin)
+  - create criterion (si besoin)
+  - create item
+  - assign score
+  - GET item criteria
+  Et affiche le déroulé + ids créés.
