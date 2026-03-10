@@ -6,7 +6,7 @@ info:
 servers:
   - url: http://127.0.0.1:8000
 paths:
-  /api/register:
+  /api/v1/register:
     post:
       tags: [Auth]
       summary: Register a new user
@@ -49,7 +49,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
-  /api/login:
+  /api/v1/login:
     post:
       tags: [Auth]
       summary: Authenticate a user
@@ -98,7 +98,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/forgot-password:
+  /api/v1/forgot-password:
     post:
       tags: [Auth]
       summary: Generate and send a password reset token
@@ -126,7 +126,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/reset-password:
+  /api/v1/reset-password:
     post:
       tags: [Auth]
       summary: Reset a password using token and email
@@ -163,7 +163,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
-  /api/logout:
+  /api/v1/logout:
     post:
       tags: [Auth]
       summary: Revoke the current access token
@@ -185,7 +185,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/user:
+  /api/v1/user:
     get:
       tags: [Auth]
       summary: Get the authenticated user profile
@@ -222,7 +222,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/users:
+  /api/v1/users:
     get:
       tags: [Users]
       summary: List public user profiles
@@ -261,8 +261,8 @@ paths:
                       description: Public collection
                       user_id: 1
                 links:
-                  first: http://127.0.0.1:8000/api/users?page=1
-                  last: http://127.0.0.1:8000/api/users?page=1
+                  first: http://127.0.0.1:8000/api/v1/users?page=1
+                  last: http://127.0.0.1:8000/api/v1/users?page=1
                   prev: null
                   next: null
                 meta:
@@ -310,7 +310,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
-  /api/users/{user}:
+  /api/v1/users/{user}:
     get:
       tags: [Users]
       summary: Show a public user profile
@@ -327,6 +327,17 @@ paths:
                   data:
                     $ref: '#/components/schemas/UserPublic'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  name: Test User
+                  avatar_url: null
+                  nationality: PT
+                  collection:
+                    id: 1
+                    title: Alpha
+                    description: Public collection
+                    user_id: 1
         '404':
           description: Resource not found
           content:
@@ -346,6 +357,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateUserRequest'
+            example:
+              name: Updated User
+              nationality: FR
       responses:
         '200':
           description: User updated
@@ -357,6 +371,20 @@ paths:
                   data:
                     $ref: '#/components/schemas/User'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  name: Updated User
+                  email: test@example.com
+                  avatar_url: null
+                  nationality: FR
+                  is_active: true
+                  user_type: user
+                  collection:
+                    id: 1
+                    title: Alpha
+                    description: Public collection
+                    user_id: 1
         '403':
           description: Forbidden
           content:
@@ -421,7 +449,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/collections:
+  /api/v1/collections:
     get:
       tags: [Collections]
       summary: List collections
@@ -461,8 +489,8 @@ paths:
                       nationality: PT
                     items: []
                 links:
-                  first: http://127.0.0.1:8000/api/collections?page=1
-                  last: http://127.0.0.1:8000/api/collections?page=1
+                  first: http://127.0.0.1:8000/api/v1/collections?page=1
+                  last: http://127.0.0.1:8000/api/v1/collections?page=1
                   prev: null
                   next: null
                 meta:
@@ -506,7 +534,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
-  /api/collections/{collection}:
+  /api/v1/collections/{collection}:
     get:
       tags: [Collections]
       summary: Show a collection
@@ -523,6 +551,26 @@ paths:
                   data:
                     $ref: '#/components/schemas/Collection'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: Alpha
+                  description: First collection
+                  user_id: 1
+                  user:
+                    id: 1
+                    name: Test User
+                    avatar_url: null
+                    nationality: PT
+                  items:
+                    - id: 1
+                      title: My First Item
+                      description: A shiny new item
+                      image_url: null
+                      status: true
+                      collection_id: 1
+                      category1_id: 1
+                      category2_id: null
         '404':
           description: Resource not found
           content:
@@ -542,6 +590,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CollectionWriteRequest'
+            example:
+              title: Updated Collection
+              description: Refined description
       responses:
         '200':
           description: Collection updated
@@ -553,6 +604,12 @@ paths:
                   data:
                     $ref: '#/components/schemas/Collection'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: Updated Collection
+                  description: Refined description
+                  user_id: 1
         '403':
           description: Forbidden
           content:
@@ -605,7 +662,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/categories:
+  /api/v1/categories:
     get:
       tags: [Categories]
       summary: List categories
@@ -633,8 +690,8 @@ paths:
                   - id: 1
                     title: Test Category
                 links:
-                  first: http://127.0.0.1:8000/api/categories?page=1
-                  last: http://127.0.0.1:8000/api/categories?page=1
+                  first: http://127.0.0.1:8000/api/v1/categories?page=1
+                  last: http://127.0.0.1:8000/api/v1/categories?page=1
                   prev: null
                   next: null
                 meta:
@@ -669,7 +726,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/categories/{category}:
+  /api/v1/categories/{category}:
     get:
       tags: [Categories]
       summary: Show a category
@@ -686,6 +743,10 @@ paths:
                   data:
                     $ref: '#/components/schemas/Category'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: Test Category
     put:
       tags: [Categories]
       summary: Update a category
@@ -699,6 +760,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CategoryWriteRequest'
+            example:
+              title: Updated Category
       responses:
         '200':
           description: Category updated
@@ -710,6 +773,10 @@ paths:
                   data:
                     $ref: '#/components/schemas/Category'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: Updated Category
         '403':
           description: Forbidden
           content:
@@ -762,7 +829,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/criteria:
+  /api/v1/criteria:
     get:
       tags: [Criteria]
       summary: List criteria
@@ -790,8 +857,8 @@ paths:
                   - id_criteria: 1
                     name: Test Criterion
                 links:
-                  first: http://127.0.0.1:8000/api/criteria?page=1
-                  last: http://127.0.0.1:8000/api/criteria?page=1
+                  first: http://127.0.0.1:8000/api/v1/criteria?page=1
+                  last: http://127.0.0.1:8000/api/v1/criteria?page=1
                   prev: null
                   next: null
                 meta:
@@ -826,7 +893,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/criteria/{criterion}:
+  /api/v1/criteria/{criterion}:
     get:
       tags: [Criteria]
       summary: Show a criterion
@@ -843,6 +910,10 @@ paths:
                   data:
                     $ref: '#/components/schemas/Criteria'
                 required: [data]
+              example:
+                data:
+                  id_criteria: 1
+                  name: Test Criterion
     put:
       tags: [Criteria]
       summary: Update a criterion
@@ -856,6 +927,8 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CriteriaWriteRequest'
+            example:
+              name: Updated Criterion
       responses:
         '200':
           description: Criterion updated
@@ -867,6 +940,10 @@ paths:
                   data:
                     $ref: '#/components/schemas/Criteria'
                 required: [data]
+              example:
+                data:
+                  id_criteria: 1
+                  name: Updated Criterion
         '403':
           description: Forbidden
           content:
@@ -919,7 +996,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/items:
+  /api/v1/items:
     get:
       tags: [Items]
       summary: List items
@@ -979,8 +1056,8 @@ paths:
                     category2: null
                     criteria: []
                 links:
-                  first: http://127.0.0.1:8000/api/items?page=1
-                  last: http://127.0.0.1:8000/api/items?page=1
+                  first: http://127.0.0.1:8000/api/v1/items?page=1
+                  last: http://127.0.0.1:8000/api/v1/items?page=1
                   prev: null
                   next: null
                 meta:
@@ -1027,7 +1104,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationErrorResponse'
-  /api/items/{item}:
+  /api/v1/items/{item}:
     get:
       tags: [Items]
       summary: Show an item
@@ -1044,6 +1121,28 @@ paths:
                   data:
                     $ref: '#/components/schemas/Item'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: My First Item
+                  description: A shiny new item
+                  image_url: null
+                  status: true
+                  collection_id: 1
+                  category1_id: 1
+                  category2_id: null
+                  collection:
+                    id: 1
+                    title: My First Collection
+                    description: Test description
+                    user_id: 1
+                  category1:
+                    id: 1
+                    title: Test Category
+                  category2: null
+                  criteria:
+                    - id_criteria: 1
+                      name: Test Criterion
     put:
       tags: [Items]
       summary: Update an item
@@ -1057,6 +1156,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ItemWriteRequest'
+            example:
+              title: Updated Item
+              description: Refined item description
+              status: false
+              category1_id: 1
       responses:
         '200':
           description: Item updated
@@ -1068,6 +1172,16 @@ paths:
                   data:
                     $ref: '#/components/schemas/Item'
                 required: [data]
+              example:
+                data:
+                  id: 1
+                  title: Updated Item
+                  description: Refined item description
+                  image_url: null
+                  status: false
+                  collection_id: 1
+                  category1_id: 1
+                  category2_id: null
         '403':
           description: Forbidden
           content:
@@ -1120,7 +1234,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/item-criteria:
+  /api/v1/item-criteria:
     get:
       tags: [ItemCriteria]
       summary: List item scores
@@ -1170,8 +1284,8 @@ paths:
                       id_criteria: 1
                       name: Test Criterion
                 links:
-                  first: http://127.0.0.1:8000/api/item-criteria?page=1
-                  last: http://127.0.0.1:8000/api/item-criteria?page=1
+                  first: http://127.0.0.1:8000/api/v1/item-criteria?page=1
+                  last: http://127.0.0.1:8000/api/v1/item-criteria?page=1
                   prev: null
                   next: null
                 meta:
@@ -1216,7 +1330,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/items/{item}/criteria:
+  /api/v1/items/{item}/criteria:
     get:
       tags: [ItemCriteria]
       summary: List scores for a specific item
@@ -1230,7 +1344,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ItemCriteriaCollectionResponse'
-  /api/items/{item}/criteria/{criterion}:
+  /api/v1/items/{item}/criteria/{criterion}:
     put:
       tags: [ItemCriteria]
       summary: Update a score value
@@ -1258,6 +1372,11 @@ paths:
                   data:
                     $ref: '#/components/schemas/ItemCriteria'
                 required: [data]
+              example:
+                data:
+                  id_item: 1
+                  id_criteria: 1
+                  value: 1
         '403':
           description: Forbidden
           content:
