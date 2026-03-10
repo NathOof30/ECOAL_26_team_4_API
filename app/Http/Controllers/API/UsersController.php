@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Users\StoreUserRequest;
+use App\Http\Requests\Users\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
 
 class UsersController extends Controller
 {
@@ -33,22 +34,9 @@ class UsersController extends Controller
     /**
      * Store a newly created user.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols(),
-            ],
-            'avatar_url' => 'nullable|string|max:255',
-            'nationality' => 'nullable|string|max:255',
-            'user_type' => 'sometimes|string|in:admin,editor,user',
-            'is_active' => 'sometimes|boolean',
-        ]);
+        $validated = $request->validated();
 
         // Hash the password before saving
         $validated['password'] = bcrypt($validated['password']);
@@ -70,31 +58,11 @@ class UsersController extends Controller
     /**
      * Update the specified user.
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
         $actor = $request->user();
         $isAdmin = $actor->user_type === 'admin';
-
-        if (! $isAdmin && $actor->id !== $user->id) {
-            return response()->json([
-                'message' => 'Unauthorized. You can only update your own profile.',
-            ], 403);
-        }
-
-        // Validate incoming data (all fields optional for update)
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'password' => [
-                'sometimes',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols(),
-            ],
-            'avatar_url' => 'nullable|string|max:255',
-            'nationality' => 'nullable|string|max:255',
-            'is_active' => 'sometimes|boolean',
-            'user_type' => 'sometimes|string|in:admin,editor,user',
-        ]);
+        $validated = $request->validated();
 
         if (! $isAdmin) {
             unset($validated['is_active'], $validated['user_type']);
@@ -114,11 +82,7 @@ class UsersController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
-        if ($request->user()->id === $user->id) {
-            return response()->json([
-                'message' => 'You cannot delete your own account through this endpoint.',
-            ], 403);
-        }
+        $this->authorize('delete', $user);
 
         $user->delete();
         return response()->json(null, 204);

@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Criteria\StoreCriteriaRequest;
+use App\Http\Requests\Criteria\UpdateCriteriaRequest;
 use App\Models\Criteria;
-use Illuminate\Http\Request;
 
 class CriteriaController extends Controller
 {
@@ -20,12 +21,9 @@ class CriteriaController extends Controller
     /**
      * Store a newly created criterion.
      */
-    public function store(Request $request)
+    public function store(StoreCriteriaRequest $request)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $criterion = Criteria::create($validated);
         return response()->json($criterion, 201);
@@ -42,12 +40,9 @@ class CriteriaController extends Controller
     /**
      * Update the specified criterion.
      */
-    public function update(Request $request, Criteria $criterion)
+    public function update(UpdateCriteriaRequest $request, Criteria $criterion)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $criterion->update($validated);
         return response()->json($criterion);
@@ -58,6 +53,7 @@ class CriteriaController extends Controller
      */
     public function destroy(Criteria $criterion)
     {
+        $this->authorize('delete', $criterion);
         $criterion->delete();
         return response()->json(null, 204);
     }

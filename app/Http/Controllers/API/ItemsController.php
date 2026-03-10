@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Items\StoreItemRequest;
+use App\Http\Requests\Items\UpdateItemRequest;
 use App\Models\Item;
 use App\Models\Collection;
 use Illuminate\Http\Request;
@@ -22,7 +24,7 @@ class ItemsController extends Controller
     /**
      * Store a newly created item.
      */
-    public function store(Request $request)
+    public function store(StoreItemRequest $request)
     {
         // Check if the user has a collection to add items to
         $collection = Collection::where('user_id', $request->user()->id)->first();
@@ -32,14 +34,7 @@ class ItemsController extends Controller
         }
 
         // Validate incoming data (collection_id is no longer needed in the request)
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image_url' => 'nullable|string|max:255',
-            'status' => 'nullable|boolean',
-            'category1_id' => 'required|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
-        ]);
+        $validated = $request->validated();
 
         // Automatically assign the user's collection
         $validated['collection_id'] = $collection->id;
@@ -61,22 +56,9 @@ class ItemsController extends Controller
     /**
      * Update the specified item.
      */
-    public function update(Request $request, Item $item)
+    public function update(UpdateItemRequest $request, Item $item)
     {
-        // Enforce ownership: only the owner of the collection can update the item
-        if ($item->collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only update items in your own collection.'], 403);
-        }
-
-        // Validate incoming data
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'image_url' => 'nullable|string|max:255',
-            'status' => 'sometimes|boolean',
-            'category1_id' => 'sometimes|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
-        ]);
+        $validated = $request->validated();
 
         $item->update($validated);
         return response()->json($item->load(['category1', 'category2']));
@@ -87,10 +69,7 @@ class ItemsController extends Controller
      */
     public function destroy(Request $request, Item $item)
     {
-        // Enforce ownership: only the owner of the collection can delete the item
-        if ($item->collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only delete items from your own collection.'], 403);
-        }
+        $this->authorize('delete', $item);
 
         $item->delete();
         return response()->json(null, 204);

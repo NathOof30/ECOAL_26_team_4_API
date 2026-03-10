@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Categories\StoreCategoryRequest;
+use App\Http\Requests\Categories\UpdateCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
@@ -20,12 +21,9 @@ class CategoryController extends Controller
     /**
      * Store a newly created category.
      */
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $category = Category::create($validated);
         return response()->json($category, 201);
@@ -42,12 +40,9 @@ class CategoryController extends Controller
     /**
      * Update the specified category.
      */
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $category->update($validated);
         return response()->json($category);
@@ -58,6 +53,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
+        $this->authorize('delete', $category);
         $category->delete();
         return response()->json(null, 204);
     }

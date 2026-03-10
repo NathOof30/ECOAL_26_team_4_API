@@ -3,31 +3,21 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
     /**
      * Register a new user and return a token
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)->mixedCase()->numbers()->symbols(),
-            ],
-            'avatar_url' => 'nullable|string|max:255',
-            'nationality' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['user_type'] = 'user';
@@ -48,17 +38,10 @@ class AuthController extends Controller
     /**
      * Authenticate user and return a token
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $credentials = [
-            'email' => mb_strtolower(trim($validated['email'])),
-            'password' => $validated['password'],
-        ];
+        $validated = $request->validated();
+        $credentials = ['email' => $validated['email'], 'password' => $validated['password']];
 
         if (! Auth::attempt($credentials)) {
             return response()->json([

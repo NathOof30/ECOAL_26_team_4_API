@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Collections\StoreCollectionRequest;
+use App\Http\Requests\Collections\UpdateCollectionRequest;
 use App\Models\Collection;
 use Illuminate\Http\Request;
 
@@ -21,18 +23,14 @@ class CollectionsController extends Controller
     /**
      * Store a newly created collection.
      */
-    public function store(Request $request)
+    public function store(StoreCollectionRequest $request)
     {
         // Enforce maximum of 1 collection per user
         if ($request->user()->collection) {
             return response()->json(['message' => 'User already has a collection.'], 403);
         }
 
-        // Validate incoming data
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         // Attach the authenticated user's ID
         $validated['user_id'] = $request->user()->id;
@@ -54,18 +52,9 @@ class CollectionsController extends Controller
     /**
      * Update the specified collection.
      */
-    public function update(Request $request, Collection $collection)
+    public function update(UpdateCollectionRequest $request, Collection $collection)
     {
-        // Enforce ownership: only the owner can update the collection
-        if ($collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only update your own collection.'], 403);
-        }
-
-        // Validate incoming data
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
 
         $collection->update($validated);
         return response()->json($collection);
@@ -76,10 +65,7 @@ class CollectionsController extends Controller
      */
     public function destroy(Request $request, Collection $collection)
     {
-        // Enforce ownership: only the owner can delete the collection
-        if ($collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only delete your own collection.'], 403);
-        }
+        $this->authorize('delete', $collection);
 
         $collection->delete();
         return response()->json(null, 204);

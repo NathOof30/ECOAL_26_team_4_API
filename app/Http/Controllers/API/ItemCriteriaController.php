@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ItemCriteria\StoreItemCriteriaRequest;
+use App\Http\Requests\ItemCriteria\UpdateItemCriteriaRequest;
 use App\Models\ItemCriteria;
 use App\Models\Item;
 use App\Models\Criteria;
@@ -22,21 +24,11 @@ class ItemCriteriaController extends Controller
     /**
      * Store a new criteria score for an item.
      */
-    public function store(Request $request)
+    public function store(StoreItemCriteriaRequest $request)
     {
-        // Validate incoming data
-        $validated = $request->validate([
-            'id_item' => 'required|exists:items,id',
-            'id_criteria' => 'required|exists:criteria,id_criteria',
-            'value' => 'required|integer|in:0,1,2',
-        ]);
+        $validated = $request->validated();
 
         $item = Item::findOrFail($validated['id_item']);
-
-        // Enforce ownership: only the owner of the item can add a score to it
-        if ($item->collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only score items in your own collection.'], 403);
-        }
 
         $alreadyExists = ItemCriteria::where('id_item', $validated['id_item'])
             ->where('id_criteria', $validated['id_criteria'])
@@ -67,17 +59,9 @@ class ItemCriteriaController extends Controller
     /**
      * Update a criteria score for an item.
      */
-    public function update(Request $request, Item $item, Criteria $criterion)
+    public function update(UpdateItemCriteriaRequest $request, Item $item, Criteria $criterion)
     {
-        // Enforce ownership: only the owner of the item can update its score
-        if ($item->collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only update scores for items in your own collection.'], 403);
-        }
-
-        // Validate the new value
-        $validated = $request->validate([
-            'value' => 'required|integer|in:0,1,2',
-        ]);
+        $validated = $request->validated();
 
         // Find and update the specific score
         $score = ItemCriteria::where('id_item', $item->id)
@@ -93,10 +77,7 @@ class ItemCriteriaController extends Controller
      */
     public function destroy(Request $request, Item $item, Criteria $criterion)
     {
-        // Enforce ownership: only the owner of the item can delete its score
-        if ($item->collection->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized. You can only delete scores from items in your own collection.'], 403);
-        }
+        $this->authorize('score', $item);
 
         ItemCriteria::where('id_item', $item->id)
                     ->where('id_criteria', $criterion->id_criteria)
