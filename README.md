@@ -16,44 +16,38 @@ This API now uses three layers:
 
 ## Route map
 
-### Public
-
-- `POST /api/register`: public. Validation in `RegisterRequest`.
-- `POST /api/login`: public with `throttle:login`. Validation in `LoginRequest`.
-- `GET /api/users`: public read-only.
-- `GET /api/users/{user}`: public read-only.
-- `GET /api/collections`: public read-only.
-- `GET /api/collections/{collection}`: public read-only.
-- `GET /api/categories`: public read-only.
-- `GET /api/categories/{category}`: public read-only.
-- `GET /api/items`: public read-only.
-- `GET /api/items/{item}`: public read-only.
-- `GET /api/criteria`: public read-only.
-- `GET /api/criteria/{criterion}`: public read-only.
-- `GET /api/item-criteria`: public read-only.
-- `GET /api/items/{item}/criteria`: public read-only.
-
-### Authenticated
-
-- `POST /api/logout`: any authenticated user.
-- `GET /api/user`: any authenticated user.
-- `POST /api/users`: authenticated, then `UserPolicy@create`. Effectively `admin` only.
-- `PUT|PATCH /api/users/{user}`: authenticated, then `UserPolicy@update`. Admin can update anyone; normal user only self.
-- `DELETE /api/users/{user}`: authenticated, then `UserPolicy@delete`. Admin only, and cannot delete self.
-- `POST /api/collections`: authenticated, then `CollectionPolicy@create`.
-- `PUT|PATCH /api/collections/{collection}`: authenticated, then `CollectionPolicy@update`. Owner only.
-- `DELETE /api/collections/{collection}`: authenticated, then `CollectionPolicy@delete`. Owner only.
-- `POST /api/items`: authenticated. Collection ownership is enforced by how the item is attached to the current user collection.
-- `PUT|PATCH /api/items/{item}`: authenticated, then `ItemPolicy@update`. Owner only.
-- `DELETE /api/items/{item}`: authenticated, then `ItemPolicy@delete`. Owner only.
-- `POST /api/item-criteria`: authenticated, then `ItemPolicy@score` through `StoreItemCriteriaRequest`. Item owner only.
-- `PUT /api/items/{item}/criteria/{criterion}`: authenticated, then `ItemPolicy@score`. Item owner only.
-- `DELETE /api/items/{item}/criteria/{criterion}`: authenticated, then `ItemPolicy@score`. Item owner only.
-
-### Authenticated + role
-
-- `POST|PUT|PATCH|DELETE /api/categories/...`: authenticated plus `user_type:admin,editor`.
-- `POST|PUT|PATCH|DELETE /api/criteria/...`: authenticated plus `user_type:admin,editor`.
+| Route | Access | Authorization source |
+| --- | --- | --- |
+| `POST /api/register` | Public | `RegisterRequest` |
+| `POST /api/login` | Public | `throttle:login` + `LoginRequest` |
+| `GET /api/users` | Public | None |
+| `GET /api/users/{user}` | Public | None |
+| `GET /api/collections` | Public | None |
+| `GET /api/collections/{collection}` | Public | None |
+| `GET /api/categories` | Public | None |
+| `GET /api/categories/{category}` | Public | None |
+| `GET /api/items` | Public | None |
+| `GET /api/items/{item}` | Public | None |
+| `GET /api/criteria` | Public | None |
+| `GET /api/criteria/{criterion}` | Public | None |
+| `GET /api/item-criteria` | Public | None |
+| `GET /api/items/{item}/criteria` | Public | None |
+| `POST /api/logout` | Authenticated | `auth:sanctum` |
+| `GET /api/user` | Authenticated | `auth:sanctum` |
+| `POST /api/users` | Authenticated admin | `auth:sanctum` + `UserPolicy@create` |
+| `PUT|PATCH /api/users/{user}` | Authenticated | `auth:sanctum` + `UserPolicy@update` |
+| `DELETE /api/users/{user}` | Authenticated admin | `auth:sanctum` + `UserPolicy@delete` |
+| `POST /api/collections` | Authenticated | `auth:sanctum` + `CollectionPolicy@create` |
+| `PUT|PATCH /api/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@update` |
+| `DELETE /api/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@delete` |
+| `POST /api/items` | Authenticated | `auth:sanctum` + current user collection binding |
+| `PUT|PATCH /api/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@update` |
+| `DELETE /api/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@delete` |
+| `POST /api/item-criteria` | Authenticated owner | `auth:sanctum` + `StoreItemCriteriaRequest` + `ItemPolicy@score` |
+| `PUT /api/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
+| `DELETE /api/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
+| `POST|PUT|PATCH|DELETE /api/categories/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
+| `POST|PUT|PATCH|DELETE /api/criteria/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
 
 ## Main files
 
