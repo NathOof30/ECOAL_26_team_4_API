@@ -39,12 +39,28 @@ Full local stack from the Composer script:
 composer run dev
 ```
 
+Production-oriented settings to review before deploy:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL`
+- `APP_DOCS_ENABLED=false`
+- mailer credentials
+- `SANCTUM_STATEFUL_DOMAINS`
+- `SANCTUM_TOKEN_EXPIRATION` if token lifetime should be enforced
+
 ### Documentation access
 
 - `/docs` serves Swagger UI
 - `/docs/openapi.yaml` serves the raw OpenAPI file
 - docs are enabled by default in `local` and `testing`
 - to expose docs in another environment, set `APP_DOCS_ENABLED=true`
+
+### API versioning
+
+- the canonical base path is `/api/v1`
+- legacy unversioned `/api/...` routes are still available temporarily for backward compatibility
+- new clients should integrate only against `/api/v1`
 
 ### Run tests
 
@@ -54,15 +70,15 @@ php artisan test
 
 ### Default API flow
 
-1. `POST /api/register` or `POST /api/login`
+1. `POST /api/v1/register` or `POST /api/v1/login`
 2. Copy the returned bearer token
 3. Send `Authorization: Bearer <token>` on protected routes
-4. Use `GET /api/user` to confirm the authenticated profile
+4. Use `GET /api/v1/user` to confirm the authenticated profile
 
 Example login request:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/login \
+curl -X POST http://127.0.0.1:8000/api/v1/login \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
@@ -71,7 +87,7 @@ curl -X POST http://127.0.0.1:8000/api/login \
 Example authenticated request:
 
 ```bash
-curl http://127.0.0.1:8000/api/user \
+curl http://127.0.0.1:8000/api/v1/user \
   -H "Accept: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
@@ -94,38 +110,38 @@ This API now uses three layers:
 
 | Route | Access | Authorization source |
 | --- | --- | --- |
-| `POST /api/register` | Public | `RegisterRequest` |
-| `POST /api/login` | Public | `throttle:login` + `LoginRequest` |
-| `POST /api/forgot-password` | Public | `ForgotPasswordRequest` |
-| `POST /api/reset-password` | Public | `ResetPasswordRequest` |
-| `GET /api/users` | Public | None |
-| `GET /api/users/{user}` | Public | None |
-| `GET /api/collections` | Public | None |
-| `GET /api/collections/{collection}` | Public | None |
-| `GET /api/categories` | Public | None |
-| `GET /api/categories/{category}` | Public | None |
-| `GET /api/items` | Public | None |
-| `GET /api/items/{item}` | Public | None |
-| `GET /api/criteria` | Public | None |
-| `GET /api/criteria/{criterion}` | Public | None |
-| `GET /api/item-criteria` | Public | None |
-| `GET /api/items/{item}/criteria` | Public | None |
-| `POST /api/logout` | Authenticated | `auth:sanctum` |
-| `GET /api/user` | Authenticated | `auth:sanctum` |
-| `POST /api/users` | Authenticated admin | `auth:sanctum` + `UserPolicy@create` |
-| `PUT|PATCH /api/users/{user}` | Authenticated | `auth:sanctum` + `UserPolicy@update` |
-| `DELETE /api/users/{user}` | Authenticated admin | `auth:sanctum` + `UserPolicy@delete` |
-| `POST /api/collections` | Authenticated | `auth:sanctum` + `CollectionPolicy@create` |
-| `PUT|PATCH /api/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@update` |
-| `DELETE /api/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@delete` |
-| `POST /api/items` | Authenticated | `auth:sanctum` + current user collection binding |
-| `PUT|PATCH /api/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@update` |
-| `DELETE /api/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@delete` |
-| `POST /api/item-criteria` | Authenticated owner | `auth:sanctum` + `StoreItemCriteriaRequest` + `ItemPolicy@score` |
-| `PUT /api/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
-| `DELETE /api/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
-| `POST|PUT|PATCH|DELETE /api/categories/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
-| `POST|PUT|PATCH|DELETE /api/criteria/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
+| `POST /api/v1/register` | Public | `RegisterRequest` |
+| `POST /api/v1/login` | Public | `throttle:login` + `LoginRequest` |
+| `POST /api/v1/forgot-password` | Public | `ForgotPasswordRequest` |
+| `POST /api/v1/reset-password` | Public | `ResetPasswordRequest` |
+| `GET /api/v1/users` | Public | None |
+| `GET /api/v1/users/{user}` | Public | None |
+| `GET /api/v1/collections` | Public | None |
+| `GET /api/v1/collections/{collection}` | Public | None |
+| `GET /api/v1/categories` | Public | None |
+| `GET /api/v1/categories/{category}` | Public | None |
+| `GET /api/v1/items` | Public | None |
+| `GET /api/v1/items/{item}` | Public | None |
+| `GET /api/v1/criteria` | Public | None |
+| `GET /api/v1/criteria/{criterion}` | Public | None |
+| `GET /api/v1/item-criteria` | Public | None |
+| `GET /api/v1/items/{item}/criteria` | Public | None |
+| `POST /api/v1/logout` | Authenticated | `auth:sanctum` |
+| `GET /api/v1/user` | Authenticated | `auth:sanctum` |
+| `POST /api/v1/users` | Authenticated admin | `auth:sanctum` + `UserPolicy@create` |
+| `PUT|PATCH /api/v1/users/{user}` | Authenticated | `auth:sanctum` + `UserPolicy@update` |
+| `DELETE /api/v1/users/{user}` | Authenticated admin | `auth:sanctum` + `UserPolicy@delete` |
+| `POST /api/v1/collections` | Authenticated | `auth:sanctum` + `CollectionPolicy@create` |
+| `PUT|PATCH /api/v1/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@update` |
+| `DELETE /api/v1/collections/{collection}` | Authenticated owner | `auth:sanctum` + `CollectionPolicy@delete` |
+| `POST /api/v1/items` | Authenticated | `auth:sanctum` + current user collection binding |
+| `PUT|PATCH /api/v1/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@update` |
+| `DELETE /api/v1/items/{item}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@delete` |
+| `POST /api/v1/item-criteria` | Authenticated owner | `auth:sanctum` + `StoreItemCriteriaRequest` + `ItemPolicy@score` |
+| `PUT /api/v1/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
+| `DELETE /api/v1/items/{item}/criteria/{criterion}` | Authenticated owner | `auth:sanctum` + `ItemPolicy@score` |
+| `POST|PUT|PATCH|DELETE /api/v1/categories/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
+| `POST|PUT|PATCH|DELETE /api/v1/criteria/...` | Authenticated admin/editor | `auth:sanctum` + `user_type:admin,editor` |
 
 ## Main files
 
@@ -167,10 +183,10 @@ Paginated list:
     }
   ],
   "links": {
-    "first": "http://127.0.0.1:8000/api/collections?page=1",
-    "last": "http://127.0.0.1:8000/api/collections?page=3",
+    "first": "http://127.0.0.1:8000/api/v1/collections?page=1",
+    "last": "http://127.0.0.1:8000/api/v1/collections?page=3",
     "prev": null,
-    "next": "http://127.0.0.1:8000/api/collections?page=2"
+    "next": "http://127.0.0.1:8000/api/v1/collections?page=2"
   },
   "meta": {
     "current_page": 1,
@@ -202,21 +218,21 @@ Validation error:
 
 Examples:
 
-- `GET /api/users?name=joao&sort=name&direction=asc&per_page=10`
-- `GET /api/collections?user_id=1&sort=title&direction=desc`
-- `GET /api/items?collection_id=2&category1_id=1&status=true`
-- `GET /api/item-criteria?id_item=5&sort=id_criteria&direction=asc`
+- `GET /api/v1/users?name=joao&sort=name&direction=asc&per_page=10`
+- `GET /api/v1/collections?user_id=1&sort=title&direction=desc`
+- `GET /api/v1/items?collection_id=2&category1_id=1&status=true`
+- `GET /api/v1/item-criteria?id_item=5&sort=id_criteria&direction=asc`
 
 ## Password reset flow
 
-1. `POST /api/forgot-password` with the user email
+1. `POST /api/v1/forgot-password` with the user email
 2. Read the reset token from the email payload
-3. `POST /api/reset-password` with `email`, `token`, `password`, and `password_confirmation`
+3. `POST /api/v1/reset-password` with `email`, `token`, `password`, and `password_confirmation`
 
 Forgot password example:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/forgot-password \
+curl -X POST http://127.0.0.1:8000/api/v1/forgot-password \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com"}'
@@ -225,7 +241,7 @@ curl -X POST http://127.0.0.1:8000/api/forgot-password \
 Reset password example:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/reset-password \
+curl -X POST http://127.0.0.1:8000/api/v1/reset-password \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","token":"RESET_TOKEN","password":"NewStrongPass1!","password_confirmation":"NewStrongPass1!"}'
