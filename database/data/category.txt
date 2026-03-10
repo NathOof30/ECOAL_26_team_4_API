@@ -1,0 +1,8 @@
+title
+Spark wheel
+Piezoelectric
+Electric arc
+Friction
+Antique (Pre-1920)
+Vintage (1920-1970)
+Modern (1970+)
