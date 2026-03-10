@@ -155,12 +155,14 @@ class ApiCrudTest extends TestCase
         $catResponse->assertStatus(201);
 
         // Update Category
-        $this->putJson('/api/categories/' . $catResponse->json('id'), [
+        $categoryId = $catResponse->json('data.id');
+
+        $this->putJson('/api/categories/' . $categoryId, [
             'title' => 'Updated Admin Category',
         ])->assertStatus(200);
 
         // Delete Category
-        $this->deleteJson('/api/categories/' . $catResponse->json('id'))
+        $this->deleteJson('/api/categories/' . $categoryId)
              ->assertStatus(204);
 
         // Note: For criteria we assume the same structure but note that the current migrations map an explicit string primary key or similar for Criteria, 
