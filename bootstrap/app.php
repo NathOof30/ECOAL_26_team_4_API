@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureUserType;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -20,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(AssignRequestId::class);
+        $middleware->append(AddSecurityHeaders::class);
+
         $middleware->alias([
             'user_type' => EnsureUserType::class,
         ]);
