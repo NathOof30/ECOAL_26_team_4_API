@@ -62,3 +62,69 @@ This API now uses three layers:
 - If the rule is "must be logged in", use `auth:sanctum`.
 - If the rule is "must have one of these roles", use `user_type`.
 - If the rule is "depends on this record", use a policy.
+
+## Response format
+
+### Success
+
+Single resource:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "My First Collection"
+  }
+}
+```
+
+Paginated list:
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "Alpha"
+    }
+  ],
+  "links": {
+    "first": "http://127.0.0.1:8000/api/collections?page=1",
+    "last": "http://127.0.0.1:8000/api/collections?page=3",
+    "prev": null,
+    "next": "http://127.0.0.1:8000/api/collections?page=2"
+  },
+  "meta": {
+    "current_page": 1,
+    "per_page": 15,
+    "total": 3
+  }
+}
+```
+
+Validation error:
+
+```json
+{
+  "message": "The given data was invalid.",
+  "status": 422,
+  "errors": {
+    "email": [
+      "The email field is required."
+    ]
+  }
+}
+```
+
+## Query parameters
+
+- `per_page`: number of records per page, max `100`
+- `sort`: allowed sort field depends on the endpoint
+- `direction`: `asc` or `desc`
+
+Examples:
+
+- `GET /api/users?name=joao&sort=name&direction=asc&per_page=10`
+- `GET /api/collections?user_id=1&sort=title&direction=desc`
+- `GET /api/items?collection_id=2&category1_id=1&status=true`
+- `GET /api/item-criteria?id_item=5&sort=id_criteria&direction=asc`
