@@ -1,3 +1,271 @@
+Tu es un assistant développeur front-end expert en React.
+Objectif: créer DANS CE RÉPERTOIRE une V1 très simple (sans style) d’un FRONT en **React (.jsx)** pour consommer mon API Laravel (ECOAL), avec une **architecture propre**, des fichiers séparés, et toutes les pages essentielles pour tester l’application (auth, collections, items, catégories, critères, scores).
+
+### Contraintes générales
+- **Pas de CSS / pas de libs UI** (HTML brut, mise en page minimale).
+- **React + JSX** (pas TypeScript pour cette V1).
+- Utiliser **Vite + React** dans un dossier dédié (par exemple `front-react/` à la racine du projet).
+- Code **simple, lisible, découpé en composants**, sans sur-ingénierie.
+- **Performant**: pas de logique inutile, pas de sur-renders, pas de gros state global non justifié.
+- **Pas de gestion d’état externe** (Redux, etc.) : uniquement **React Context + hooks**.
+
+### Contexte backend (IMPORTANT)
+- Backend: **Laravel 12 + Sanctum**.
+- Base API: `http://127.0.0.1:8000/api` (configurable via `.env` côté front).
+- Auth protégée: middleware `auth:sanctum` avec **token Bearer** (personal access tokens).
+- La colonne `users.remember_token` existe, mais l’API renvoie un **`access_token` Sanctum**: le “remember” se fait côté front en stockant le token (localStorage), **pas via cookies**.
+
+### Headers et réseau
+- Toujours: `Accept: application/json`.
+- Si body JSON: `Content-Type: application/json`.
+- Si route protégée: `Authorization: Bearer <access_token>`.
+- Pas besoin de CSRF/cookies pour ces endpoints.
+- Attention CORS: prévoir que le front tourne sur un autre port (Vite), donc l’origine doit être autorisée côté Laravel (mais ne pas gérer CORS dans ce code front).
+
+### Routes API à supporter (lecture + écriture)
+Préfixe automatique `/api` côté backend, front utilisera les chemins **sans /api** mais avec la base URL.
+
+**PUBLIC**
+- `POST /register`
+- `POST /login`
+- `GET  /users`
+- `GET  /users/{id}`
+- `GET  /collections`
+- `GET  /collections/{id}`
+- `GET  /categories`
+- `GET  /categories/{id}`
+- `GET  /items`
+- `GET  /items/{id}`
+- `GET  /criteria`
+- `GET  /criteria/{id}`
+- `GET  /item-criteria`
+- `GET  /items/{item_id}/criteria`
+
+**PROTÉGÉES** (Bearer requis)
+- `POST   /logout`
+- `GET    /user`
+- `POST   /collections`
+- `PUT    /collections/{id}`
+- `DELETE /collections/{id}`
+- `POST   /categories`
+- `PUT    /categories/{id}`
+- `DELETE /categories/{id}`
+- `POST   /items`
+- `PUT    /items/{id}`
+- `DELETE /items/{id}`
+- `POST   /criteria`
+- `PUT    /criteria/{id}`
+- `DELETE /criteria/{id}`
+- `POST   /item-criteria`
+- `PUT    /items/{item_id}/criteria/{crit_id}`
+- `DELETE /items/{item_id}/criteria/{crit_id}`
+
+### Règles métier / payloads principaux (rappel)
+**Auth**
+- Register (`POST /register`) body:
+  - `{ name, email, password, avatar_url?:string|null, nationality?:string|null, user_type?: "admin"|"editor"|"user" }`
+  - Réponse: `{ access_token, token_type: "Bearer", user }`
+- Login (`POST /login`) body:
+  - `{ email, password }`
+  - Réponse: idem register.
+- Logout (`POST /logout`): pas de body, invalide le token courant.
+- Me (`GET /user`): renvoie l’utilisateur connecté.
+
+**Collections**
+- 1 collection max par user, sinon 403 `{ message: "User already has a collection." }`.
+- `POST /collections` body: `{ title, description?:string|null }` (user_id géré backend).
+
+**Categories**
+- Table `category`, champ `title`.
+- `POST /categories` body: `{ title }`.
+
+**Criteria**
+- Table `criteria`, PK = `id_criteria`.
+- `POST /criteria` body: `{ name }`.
+
+**Items**
+- `POST /items` nécessite une collection existante pour le user.
+- Body:
+  ```json
+  {
+    "title": "Zippo 1941 Replica",
+    "description": "...",
+    "image_url": null,
+    "status": false,
+    "category1_id": 1,
+    "category2_id": null
+  }
+  ```
+
+**Scores (item_criteria)**
+- `POST /item-criteria` body:
+  - `{ "id_item": number, "id_criteria": number, "value": 0|1|2 }`
+
+---
+
+### Architecture React souhaitée
+Créer un dossier `front-react/` avec une architecture claire et minimale:
+
+- `front-react/`
+  - `index.html` (Vite)
+  - `vite.config.mts` ou `vite.config.mjs`
+  - `.env` (front) avec `VITE_API_BASE_URL=http://127.0.0.1:8000/api`
+  - `src/`
+    - `main.jsx`          → Entrée React, rendu de `<App />`
+    - `App.jsx`           → Layout global + routes
+    - `api/`
+      - `client.js`      → Wrapper fetch pour l’API (headers, token, gestion JSON/texte, 204)
+    - `context/`
+      - `AuthContext.jsx` → Contexte d’auth (user + token + actions login/logout/register)
+    - `pages/`
+      - `LoginPage.jsx`
+      - `RegisterPage.jsx`
+      - `DashboardPage.jsx`      (vue globale, liens vers les autres blocs)
+      - `CollectionsPage.jsx`
+      - `ItemsPage.jsx`
+      - `CategoriesPage.jsx`
+      - `CriteriaPage.jsx`
+      - `ScoresPage.jsx`
+    - `components/`
+      - `Layout.jsx`              → Enveloppe avec header simple + navigation
+      - `AuthStatus.jsx`          → Affiche token, user, boutons logout/refresh user
+      - `ApiTesterPanel.jsx`      → Petit panneau pour faire une requête libre (méthode, path, body)
+      - `LogViewer.jsx`           → Affichage du log des requêtes + dernière réponse
+      - Formulaires simples:
+        - `CollectionForm.jsx`
+        - `ItemForm.jsx`
+        - `CategoryForm.jsx`
+        - `CriteriaForm.jsx`
+        - `ScoreForm.jsx`
+
+### Routing
+- Utiliser **React Router** (version moderne) ou, si tu veux rester ultra-simple, un router maison basé sur `window.location.hash`.  
+  Pour cette V1, tu peux utiliser **React Router** (c’est acceptable) :
+  - `"/login"` → `LoginPage`
+  - `"/register"` → `RegisterPage`
+  - `"/"` → `DashboardPage` (protégé: rediriger vers login si pas de token)
+  - `"/collections"` → `CollectionsPage`
+  - `"/items"` → `ItemsPage`
+  - `"/categories"` → `CategoriesPage`
+  - `"/criteria"` → `CriteriaPage`
+  - `"/scores"` → `ScoresPage`
+
+La **protection de route** peut être gérée par un composant `ProtectedRoute` qui vérifie la présence du token dans le contexte d’auth.
+
+### Détails attendus des modules
+
+#### 1. Client API (`api/client.js`)
+Implémenter un client minimaliste:
+- `getBaseUrl()` → lit `import.meta.env.VITE_API_BASE_URL`.
+- `apiFetch(path, { method = "GET", body, auth = false })`:
+  - Construit l’URL complète (trim des `/`).
+  - Ajoute `Accept: application/json`.
+  - Ajoute `Content-Type: application/json` si `body` défini.
+  - Ajoute `Authorization: Bearer <token>` si `auth` true et token présent (fourni par le contexte d’auth).
+  - Mesure la durée (`performance.now()`).
+  - Gère réponses:
+    - 204 → retourne un objet sans tenter `json()`.
+    - Sinon lit `text`, essaie `JSON.parse`, mais conserve le **texte brut**.
+  - Retourne un objet:
+    - `{ ok, status, durationMs, json, text, error, url, method, headersSent, bodySent }`.
+
+Prévoir une fonction utilitaire:  
+`setTokenGetter(fn)` pour que le client puisse récupérer le token courant depuis le contexte.
+
+#### 2. Contexte d’auth (`context/AuthContext.jsx`)
+- Stocker:
+  - `user` (ou `null`)
+  - `token` (string ou `null`)
+  - `loading` / `error` éventuels pour les actions.
+- Persistant:
+  - Lire/écrire le `token` dans `localStorage` (clé genre `"ecoal_token"`).
+- Fournir un hook `useAuth()` pour accéder facilement à:
+  - `login(email, password)`
+  - `register({ name, email, password })`
+  - `logout()`
+  - `fetchMe()` (GET `/user` pour rafraîchir le profil)
+- Après `login` / `register`: stocker `access_token`, le fournir au client API, et éventuellement appeler `fetchMe`.
+
+#### 3. Pages
+
+**LoginPage.jsx**
+- Formulaire simple email/password.
+- Utilise `useAuth().login`.
+- En cas de succès, redirige vers `/`.
+- Affiche erreurs simples en texte brut.
+
+**RegisterPage.jsx**
+- Formulaire name/email/password.
+- Utilise `useAuth().register`.
+- Peut enchaîner automatiquement sur `fetchMe` et rediriger vers `/`.
+
+**DashboardPage.jsx**
+- Page d’accueil protégée.
+- Affiche:
+  - Un résumé de l’utilisateur courant (ou message si non chargé).
+  - Quelques liens vers les pages: Collections, Items, Categories, Criteria, Scores.
+  - Un composant `AuthStatus` (token, boutons logout / refresh user).
+  - Un `ApiTesterPanel` simplifié pour faire de petites requêtes de test.
+
+**CollectionsPage.jsx**
+- Affiche la liste des collections (GET `/collections`).
+- Formulaire pour créer la collection de l’utilisateur courant (POST `/collections`).
+- Optionnel: bouton pour supprimer une collection par id (DELETE).
+
+**ItemsPage.jsx**
+- Affiche les items (GET `/items`).
+- Formulaire pour créer un item:
+  - `title`, `description`, `image_url`, `status` (checkbox), `category1_id`, `category2_id`.
+  - Utilise POST `/items` (protégé).
+
+**CategoriesPage.jsx**
+- Liste catégories (GET `/categories`).
+- Formulaire pour ajout (POST `/categories`).
+
+**CriteriaPage.jsx**
+- Liste critères (GET `/criteria`).
+- Formulaire pour ajout (POST `/criteria`).
+
+**ScoresPage.jsx**
+- Formulaire pour créer un score (item_criteria):
+  - `id_item`, `id_criteria`, `value` (0,1,2).
+  - POST `/item-criteria`.
+- Liste simple des scores (GET `/item-criteria`) ou des scores d’un item (GET `/items/{id}/criteria`).
+
+#### 4. Log des requêtes (`LogViewer.jsx` + intégration)
+- Stocker localement (dans un context ou dans `App`) un petit tableau de logs (ex: max 50).
+- Chaque entrée: `{ timestamp, method, url, status, durationMs }`.
+- `LogViewer`:
+  - Affiche la liste.
+  - Affiche la **dernière réponse détaillée** (meta + JSON + texte brut).
+  - Bouton “Clear log”.
+- Chaque appel API (`apiFetch`) doit pouvoir pousser une entrée de log via un callback (fourni par `App`).
+
+### Style de code
+- **Pas de CSS**: uniquement HTML de base (`div`, `h1`, `form`, `input`, `button`, `pre`).
+- Utiliser `pre` pour afficher les JSON et réponses brutes.
+- Pas de commentaires inutiles; commenter seulement les parties importantes (intention).
+- Noms de composants et de fichiers clairs et cohérents.
+
+### Livrables attendus
+- L’ensemble des fichiers React mentionnés ci-dessus, avec du code **fonctionnel** (sans dépendre d’autres fichiers absents).
+- Scripts NPM classiques:
+  - `npm run dev`
+  - `npm run build`
+  - `npm run preview`
+- README minimal dans `front-react/` expliquant:
+  - Comment lancer le backend (`php artisan serve`).
+  - Comment lancer le front (`npm install`, `npm run dev`).
+  - Comment configurer `VITE_API_BASE_URL` si besoin.
+
+### Résumé de ce que tu dois faire
+À partir de cette description:
+1. Créer un projet Vite React dans `front-react/`.
+2. Mettre en place le client API, le contexte d’auth et le log.
+3. Implémenter les pages et composants listés, sans style, en JSX.
+4. Gérer les routes principales (login, register, dashboard, listes/CRUD simples).
+5. Veiller à ce que chaque opération importante de l’API soit testable via une page ou via le panneau de requête libre.
+
 Tu es un assistant développeur. Objectif: créer DANS CE RÉPERTOIRE (repo Laravel existant) une mini app front de test d’API, sans style, ultra simple, rapide et fonctionnelle, pour tester toutes les routes API (auth + CRUD) listées ci-dessous.
 
 Contraintes
