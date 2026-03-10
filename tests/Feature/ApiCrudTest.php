@@ -42,11 +42,15 @@ class ApiCrudTest extends TestCase
         $response = $this->postJson('/api/register', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
-            'password' => 'password123',
+            'password' => 'StrongPass1!',
+            'password_confirmation' => 'StrongPass1!',
+            'user_type' => 'admin',
         ]);
 
         $response->assertStatus(201)
-                 ->assertJsonStructure(['access_token', 'token_type', 'user']);
+                 ->assertJsonStructure(['access_token', 'token_type', 'user'])
+                 ->assertJsonPath('user.user_type', 'user')
+                 ->assertJsonPath('user.is_active', true);
     }
 
     public function test_user_can_login()
@@ -125,8 +129,7 @@ class ApiCrudTest extends TestCase
             'id_criteria' => $this->criteria->id_criteria,
             'value' => 2,
         ]);
-        
-        file_put_contents('dump.json', $scoreResponse->getContent());
+
         $scoreResponse->assertStatus(201);
 
         // 4. Read the scores for this item back via public route
@@ -156,5 +159,27 @@ class ApiCrudTest extends TestCase
 
         // Note: For criteria we assume the same structure but note that the current migrations map an explicit string primary key or similar for Criteria, 
         // the default behavior is sufficient to test Auth barrier for now.
+    }
+
+    public function test_inactive_user_cannot_login()
+    {
+        $this->user->update(['is_active' => false]);
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'test@example.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['message' => 'This account is inactive.']);
+    }
+
+    public function test_regular_user_cannot_manage_categories()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->postJson('/api/categories', [
+            'title' => 'Blocked Category',
+        ])->assertStatus(403);
     }
 }
