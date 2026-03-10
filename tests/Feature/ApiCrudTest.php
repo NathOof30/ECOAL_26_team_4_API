@@ -220,6 +220,26 @@ class ApiCrudTest extends TestCase
             ->assertJson(['message' => 'A score already exists for this item and criterion.']);
     }
 
+    public function test_deleting_missing_item_score_returns_not_found()
+    {
+        Sanctum::actingAs($this->user);
+
+        $collection = Collection::create([
+            'title' => 'User Collection',
+            'user_id' => $this->user->id,
+        ]);
+
+        $item = Item::create([
+            'title' => 'Unscored Item',
+            'collection_id' => $collection->id,
+            'category1_id' => $this->category->id,
+        ]);
+
+        $this->deleteJson("/api/items/{$item->id}/criteria/{$this->criteria->id_criteria}")
+            ->assertStatus(404)
+            ->assertJson(['message' => 'Score not found for this item and criterion.']);
+    }
+
     public function test_public_list_supports_pagination_filters_and_sorting()
     {
         Collection::create(['title' => 'Bravo', 'user_id' => $this->user->id]);
