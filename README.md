@@ -39,6 +39,13 @@ Full local stack from the Composer script:
 composer run dev
 ```
 
+### Documentation access
+
+- `/docs` serves Swagger UI
+- `/docs/openapi.yaml` serves the raw OpenAPI file
+- docs are enabled by default in `local` and `testing`
+- to expose docs in another environment, set `APP_DOCS_ENABLED=true`
+
 ### Run tests
 
 ```bash
