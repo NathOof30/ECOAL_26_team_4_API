@@ -90,4 +90,39 @@ class AuthController extends Controller
             'message' => 'Successfully logged out'
         ]);
     }
+
+    /**
+     * Get authenticated user with collections data and formatted URLs.
+     */
+    public function currentUser(Request $request)
+    {
+        $user = $request->user()->load('collection');
+        $avatarUrl = $user->avatar_url;
+        
+        if ($avatarUrl && !str_starts_with($avatarUrl, 'http')) {
+            $avatarUrl = $this->getAbsoluteStorageUrl(str_replace('/storage/', '', $avatarUrl));
+        }
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar_url' => $avatarUrl,
+            'nationality' => $user->nationality,
+            'is_active' => $user->is_active,
+            'user_type' => $user->user_type,
+            'created_at' => $user->created_at,
+            'collection' => $user->collection,
+            'has_collection' => (bool) $user->collection,
+        ]);
+    }
+
+    /**
+     * Convert a relative storage path to an absolute backend URL.
+     */
+    private function getAbsoluteStorageUrl(string $relativePath): string
+    {
+        $baseUrl = rtrim(config('app.url'), '/');
+        return "{$baseUrl}/storage/{$relativePath}";
+    }
 }

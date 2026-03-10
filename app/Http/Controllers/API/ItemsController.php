@@ -12,12 +12,13 @@ use Illuminate\Support\Facades\Storage;
 class ItemsController extends Controller
 {
     /**
-     * Display a listing of all items.
+     * Display a listing of all items with complete relationship data.
      */
     public function index()
     {
-        // Return all items with their relationships
-        $items = Item::with(['collection', 'category1', 'category2', 'criteria'])->get();
+        $items = Item::with(['collection', 'category1', 'category2', 'criteria'])
+            ->get()
+            ->map(fn($item) => $this->formatItemResponse($item));
         return response()->json($items);
     }
 
@@ -53,17 +54,16 @@ class ItemsController extends Controller
         $validated['collection_id'] = $collection->id;
 
         $item = Item::create($validated);
-        return response()->json($item->load(['category1', 'category2']), 201);
+        return response()->json($this->formatItemResponse($item->load(['category1', 'category2', 'criteria'])), 201);
     }
 
     /**
-     * Display the specified item.
+     * Display the specified item with complete relationship data.
      */
     public function show(Item $item)
     {
-        // Load all relationships for the item
         $item->load(['collection', 'category1', 'category2', 'criteria']);
-        return response()->json($item);
+        return response()->json($this->formatItemResponse($item));
     }
 
     /**
@@ -98,7 +98,7 @@ class ItemsController extends Controller
         }
 
         $item->update($validated);
-        return response()->json($item->load(['category1', 'category2']));
+        return response()->json($this->formatItemResponse($item->load(['category1', 'category2', 'criteria'])));
     }
 
     /**
@@ -136,7 +136,7 @@ class ItemsController extends Controller
         }
 
         $path = $validated['image']->store('items', 'public');
-        $url = Storage::url($path);
+        $url = $this->getAbsoluteStorageUrl($path);
 
         $item->update([
             'image_url' => $url,
@@ -159,5 +159,68 @@ class ItemsController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Convert a relative storage path to an absolute backend URL.
+     * Example: 'items/abc123.jpg' → 'http://127.0.0.1:8000/storage/items/abc123.jpg'
+     */
+    private function getAbsoluteStorageUrl(string $relativePath): string
+    {
+        $baseUrl = rtrim(config('app.url'), '/');
+        return "{$baseUrl}/storage/{$relativePath}";
+    }
+
+    /**
+     * Format item response with complete category and score data.
+     * Ensures category names and all scores are included in a structured format.
+     */
+    private function formatItemResponse($item): array
+    {
+        $scores = $item->criteria->mapWithKeys(fn($criterion) => [
+            $criterion->name => [
+                'id' => $criterion->id_criteria,
+                'value' => $criterion->pivot->value,
+                'value_label' => $this->getScoreLabel($criterion->pivot->value),
+            ],
+        ])->all();
+
+        $imageUrl = $item->image_url;
+        if ($imageUrl && !str_starts_with($imageUrl, 'http')) {
+            $imageUrl = $this->getAbsoluteStorageUrl(str_replace('/storage/', '', $imageUrl));
+        }
+
+        return [
+            'id' => $item->id,
+            'title' => $item->title,
+            'description' => $item->description,
+            'image_url' => $imageUrl,
+            'status' => $item->status,
+            'created_at' => $item->created_at,
+            'collection_id' => $item->collection_id,
+            'collection' => $item->collection,
+            'category1' => [
+                'id' => $item->category1->id,
+                'title' => $item->category1->title,
+            ],
+            'category2' => $item->category2 ? [
+                'id' => $item->category2->id,
+                'title' => $item->category2->title,
+            ] : null,
+            'criteria' => $scores,
+        ];
+    }
+
+    /**
+     * Convert numeric score to human-readable label.
+     */
+    private function getScoreLabel(int $value): string
+    {
+        return match($value) {
+            0 => 'Low',
+            1 => 'Medium',
+            2 => 'High',
+            default => 'Unknown',
+        };
     }
 }

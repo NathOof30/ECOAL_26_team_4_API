@@ -14,8 +14,9 @@ class UsersController extends Controller
      */
     public function index()
     {
-        // Return all users with their collection
-        $users = User::with('collection')->get();
+        $users = User::with('collection')
+            ->get()
+            ->map(fn($user) => $this->formatUserResponse($user));
         return response()->json($users);
     }
 
@@ -51,9 +52,8 @@ class UsersController extends Controller
      */
     public function show(User $user)
     {
-        // Load the user's collection and return
         $user->load('collection');
-        return response()->json($user);
+        return response()->json($this->formatUserResponse($user));
     }
 
     /**
@@ -129,7 +129,7 @@ class UsersController extends Controller
         }
 
         $path = $validated['avatar']->store('avatars', 'public');
-        $url = Storage::url($path);
+        $url = $this->getAbsoluteStorageUrl($path);
 
         $user->update([
             'avatar_url' => $url,
@@ -152,5 +152,37 @@ class UsersController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Convert a relative storage path to an absolute backend URL.
+     */
+    private function getAbsoluteStorageUrl(string $relativePath): string
+    {
+        $baseUrl = rtrim(config('app.url'), '/');
+        return "{$baseUrl}/storage/{$relativePath}";
+    }
+
+    /**
+     * Format user response with absolute avatar URLs.
+     */
+    private function formatUserResponse($user): array
+    {
+        $avatarUrl = $user->avatar_url;
+        if ($avatarUrl && !str_starts_with($avatarUrl, 'http')) {
+            $avatarUrl = $this->getAbsoluteStorageUrl(str_replace('/storage/', '', $avatarUrl));
+        }
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar_url' => $avatarUrl,
+            'nationality' => $user->nationality,
+            'is_active' => $user->is_active,
+            'user_type' => $user->user_type,
+            'created_at' => $user->created_at,
+            'collection' => $user->collection,
+        ];
     }
 }

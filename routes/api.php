@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\API\UsersController;
@@ -87,9 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::get('/user', [AuthController::class, 'currentUser']);
 
     Route::post('/user/avatar', [UsersController::class, 'uploadAvatar']);
 
