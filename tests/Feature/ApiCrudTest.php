@@ -10,6 +10,7 @@ use App\Models\Criteria;
 use App\Models\Collection;
 use App\Models\Item;
 use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Facades\Password;
 
 class ApiCrudTest extends TestCase
 {
@@ -62,6 +63,42 @@ class ApiCrudTest extends TestCase
 
         $response->assertStatus(200)
                  ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']]);
+    }
+
+    public function test_user_can_request_password_reset_link()
+    {
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => 'test@example.com',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.message', __(
+                Password::RESET_LINK_SENT
+            ));
+
+        $this->assertDatabaseHas('password_reset_tokens', [
+            'email' => 'test@example.com',
+        ]);
+    }
+
+    public function test_user_can_reset_password_with_valid_token()
+    {
+        $token = Password::broker()->createToken($this->user);
+
+        $response = $this->postJson('/api/reset-password', [
+            'email' => 'test@example.com',
+            'token' => $token,
+            'password' => 'NewStrongPass1!',
+            'password_confirmation' => 'NewStrongPass1!',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('data.message', __(Password::PASSWORD_RESET));
+
+        $this->postJson('/api/login', [
+            'email' => 'test@example.com',
+            'password' => 'NewStrongPass1!',
+        ])->assertStatus(200);
     }
 
     public function test_authenticated_user_can_get_profile()
