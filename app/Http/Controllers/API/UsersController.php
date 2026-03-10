@@ -9,6 +9,17 @@ use Illuminate\Validation\Rules\Password;
 
 class UsersController extends Controller
 {
+    protected function publicUserData(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'avatar_url' => $user->avatar_url,
+            'nationality' => $user->nationality,
+            'collection' => $user->collection,
+        ];
+    }
+
     /**
      * Display a listing of all users.
      */
@@ -16,7 +27,7 @@ class UsersController extends Controller
     {
         // Return all users with their collection
         $users = User::with('collection')->get();
-        return response()->json($users);
+        return response()->json($users->map(fn (User $user) => $this->publicUserData($user)));
     }
 
     /**
@@ -53,7 +64,7 @@ class UsersController extends Controller
     {
         // Load the user's collection and return
         $user->load('collection');
-        return response()->json($user);
+        return response()->json($this->publicUserData($user));
     }
 
     /**

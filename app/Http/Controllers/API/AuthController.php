@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -49,18 +50,23 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $credentials = [
+            'email' => mb_strtolower(trim($validated['email'])),
+            'password' => $validated['password'],
+        ];
+
+        if (! Auth::attempt($credentials)) {
             return response()->json([
                 'message' => 'Invalid login details'
             ], 401);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::where('email', $credentials['email'])->firstOrFail();
 
         if (! $user->is_active) {
             Auth::logout();
@@ -69,6 +75,8 @@ class AuthController extends Controller
                 'message' => 'This account is inactive.',
             ], 403);
         }
+
+        RateLimiter::clear($credentials['email'].'|'.$request->ip());
 
         // Optional: Revoke existing tokens for a single-device login
         // $user->tokens()->delete();

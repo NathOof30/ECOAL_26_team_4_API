@@ -38,6 +38,16 @@ class ItemCriteriaController extends Controller
             return response()->json(['message' => 'Unauthorized. You can only score items in your own collection.'], 403);
         }
 
+        $alreadyExists = ItemCriteria::where('id_item', $validated['id_item'])
+            ->where('id_criteria', $validated['id_criteria'])
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json([
+                'message' => 'A score already exists for this item and criterion.',
+            ], 409);
+        }
+
         $score = ItemCriteria::create($validated);
         return response()->json($score->load(['item', 'criteria']), 201);
     }

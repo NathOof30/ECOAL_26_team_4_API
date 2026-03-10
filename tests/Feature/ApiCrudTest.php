@@ -86,7 +86,11 @@ class ApiCrudTest extends TestCase
     public function test_can_fetch_public_resources()
     {
         // Users list
-        $this->getJson('/api/users')->assertStatus(200);
+        $this->getJson('/api/users')
+            ->assertStatus(200)
+            ->assertJsonMissingPath('0.email')
+            ->assertJsonMissingPath('0.user_type')
+            ->assertJsonMissingPath('0.is_active');
         // Categories
         $this->getJson('/api/categories')->assertStatus(200);
         // Collections
@@ -181,5 +185,34 @@ class ApiCrudTest extends TestCase
         $this->postJson('/api/categories', [
             'title' => 'Blocked Category',
         ])->assertStatus(403);
+    }
+
+    public function test_user_cannot_create_duplicate_score_for_same_item_and_criterion()
+    {
+        Sanctum::actingAs($this->user);
+
+        $collection = Collection::create([
+            'title' => 'User Collection',
+            'user_id' => $this->user->id,
+        ]);
+
+        $item = Item::create([
+            'title' => 'Scored Item',
+            'collection_id' => $collection->id,
+            'category1_id' => $this->category->id,
+        ]);
+
+        $this->postJson('/api/item-criteria', [
+            'id_item' => $item->id,
+            'id_criteria' => $this->criteria->id_criteria,
+            'value' => 1,
+        ])->assertStatus(201);
+
+        $this->postJson('/api/item-criteria', [
+            'id_item' => $item->id,
+            'id_criteria' => $this->criteria->id_criteria,
+            'value' => 2,
+        ])->assertStatus(409)
+            ->assertJson(['message' => 'A score already exists for this item and criterion.']);
     }
 }
