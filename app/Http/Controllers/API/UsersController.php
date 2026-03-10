@@ -9,6 +9,7 @@ use App\Http\Resources\UserPublicResource;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UsersController extends Controller
 {
@@ -47,6 +48,16 @@ class UsersController extends Controller
         $validated['password'] = bcrypt($validated['password']);
 
         $user = User::create($validated);
+
+        Log::channel('audit')->info('users.created', [
+            'actor_id' => $request->user()->id,
+            'target_user_id' => $user->id,
+            'target_email' => $user->email,
+            'user_type' => $user->user_type,
+            'is_active' => $user->is_active,
+            'ip' => $request->ip(),
+        ]);
+
         return (new UserResource($user))->response()->setStatusCode(201);
     }
 
@@ -69,6 +80,7 @@ class UsersController extends Controller
         $isAdmin = $actor->user_type === 'admin';
         $validated = $request->validated();
         $wasActive = $user->is_active;
+        $oldUserType = $user->user_type;
 
         if (! $isAdmin) {
             unset($validated['is_active'], $validated['user_type']);
@@ -84,6 +96,38 @@ class UsersController extends Controller
 
         if ($wasActive && $user->is_active === false) {
             $user->tokens()->delete();
+
+            Log::channel('audit')->warning('users.deactivated', [
+                'actor_id' => $actor->id,
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'previous_is_active' => $wasActive,
+                'new_is_active' => $user->is_active,
+                'tokens_revoked' => true,
+                'ip' => $request->ip(),
+            ]);
+        }
+
+        if ($oldUserType !== $user->user_type) {
+            Log::channel('audit')->warning('users.role_changed', [
+                'actor_id' => $actor->id,
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'previous_user_type' => $oldUserType,
+                'new_user_type' => $user->user_type,
+                'ip' => $request->ip(),
+            ]);
+        }
+
+        if ($wasActive !== $user->is_active && ! ($wasActive && $user->is_active === false)) {
+            Log::channel('audit')->info('users.active_status_changed', [
+                'actor_id' => $actor->id,
+                'target_user_id' => $user->id,
+                'target_email' => $user->email,
+                'previous_is_active' => $wasActive,
+                'new_is_active' => $user->is_active,
+                'ip' => $request->ip(),
+            ]);
         }
 
         return new UserResource($user);
@@ -95,6 +139,14 @@ class UsersController extends Controller
     public function destroy(Request $request, User $user)
     {
         $this->authorize('delete', $user);
+
+        Log::channel('audit')->warning('users.deleted', [
+            'actor_id' => $request->user()->id,
+            'target_user_id' => $user->id,
+            'target_email' => $user->email,
+            'target_user_type' => $user->user_type,
+            'ip' => $request->ip(),
+        ]);
 
         $user->delete();
         return response()->json(null, 204);
