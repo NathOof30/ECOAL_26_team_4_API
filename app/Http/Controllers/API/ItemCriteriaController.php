@@ -19,7 +19,26 @@ class ItemCriteriaController extends Controller
      */
     public function index()
     {
-        $scores = ItemCriteria::with(['item', 'criteria'])->get();
+        $query = ItemCriteria::with(['item', 'criteria']);
+
+        if (request()->filled('id_item')) {
+            $query->where('id_item', request('id_item'));
+        }
+
+        if (request()->filled('id_criteria')) {
+            $query->where('id_criteria', request('id_criteria'));
+        }
+
+        if (request()->filled('value')) {
+            $query->where('value', request('value'));
+        }
+
+        $sort = in_array(request('sort'), ['id_item', 'id_criteria', 'value'], true) ? request('sort') : 'id_item';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $scores = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return ItemCriteriaResource::collection($scores);
     }
 
@@ -52,7 +71,9 @@ class ItemCriteriaController extends Controller
         // Return all criteria scores for this item
         $scores = ItemCriteria::where('id_item', $item->id)
                     ->with('criteria')
-                    ->get();
+                    ->orderBy('id_criteria')
+                    ->paginate(min((int) request('per_page', 15), 100))
+                    ->appends(request()->query());
         return ItemCriteriaResource::collection($scores);
     }
 

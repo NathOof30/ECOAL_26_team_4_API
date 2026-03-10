@@ -15,7 +15,18 @@ class CriteriaController extends Controller
      */
     public function index()
     {
-        $criteria = Criteria::all();
+        $query = Criteria::query();
+
+        if (request()->filled('name')) {
+            $query->where('name', 'like', '%'.request('name').'%');
+        }
+
+        $sort = in_array(request('sort'), ['id_criteria', 'name'], true) ? request('sort') : 'id_criteria';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $criteria = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return CriteriaResource::collection($criteria);
     }
 

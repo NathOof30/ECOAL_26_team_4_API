@@ -15,7 +15,18 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::all();
+        $query = Category::query();
+
+        if (request()->filled('title')) {
+            $query->where('title', 'like', '%'.request('title').'%');
+        }
+
+        $sort = in_array(request('sort'), ['id', 'title'], true) ? request('sort') : 'id';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $categories = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return CategoryResource::collection($categories);
     }
 

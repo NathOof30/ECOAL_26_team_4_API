@@ -17,7 +17,22 @@ class CollectionsController extends Controller
      */
     public function index()
     {
-        $collections = Collection::with(['user', 'items'])->get();
+        $query = Collection::with(['user', 'items']);
+
+        if (request()->filled('user_id')) {
+            $query->where('user_id', request('user_id'));
+        }
+
+        if (request()->filled('title')) {
+            $query->where('title', 'like', '%'.request('title').'%');
+        }
+
+        $sort = in_array(request('sort'), ['id', 'title', 'user_id'], true) ? request('sort') : 'id';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $collections = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return CollectionResource::collection($collections);
     }
 

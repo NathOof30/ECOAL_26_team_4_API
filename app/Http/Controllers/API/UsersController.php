@@ -17,7 +17,22 @@ class UsersController extends Controller
      */
     public function index()
     {
-        $users = User::with('collection')->get();
+        $query = User::with('collection');
+
+        if (request()->filled('name')) {
+            $query->where('name', 'like', '%'.request('name').'%');
+        }
+
+        if (request()->filled('nationality')) {
+            $query->where('nationality', request('nationality'));
+        }
+
+        $sort = in_array(request('sort'), ['id', 'name', 'nationality'], true) ? request('sort') : 'id';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $users = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return UserPublicResource::collection($users);
     }
 
@@ -53,6 +68,7 @@ class UsersController extends Controller
         $actor = $request->user();
         $isAdmin = $actor->user_type === 'admin';
         $validated = $request->validated();
+        $wasActive = $user->is_active;
 
         if (! $isAdmin) {
             unset($validated['is_active'], $validated['user_type']);
@@ -64,6 +80,12 @@ class UsersController extends Controller
         }
 
         $user->update($validated);
+        $user->refresh();
+
+        if ($wasActive && $user->is_active === false) {
+            $user->tokens()->delete();
+        }
+
         return new UserResource($user);
     }
 

@@ -18,7 +18,34 @@ class ItemsController extends Controller
      */
     public function index()
     {
-        $items = Item::with(['collection', 'category1', 'category2', 'criteria'])->get();
+        $query = Item::with(['collection', 'category1', 'category2', 'criteria']);
+
+        if (request()->filled('collection_id')) {
+            $query->where('collection_id', request('collection_id'));
+        }
+
+        if (request()->filled('category1_id')) {
+            $query->where('category1_id', request('category1_id'));
+        }
+
+        if (request()->filled('category2_id')) {
+            $query->where('category2_id', request('category2_id'));
+        }
+
+        if (request()->filled('status')) {
+            $query->where('status', filter_var(request('status'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE));
+        }
+
+        if (request()->filled('title')) {
+            $query->where('title', 'like', '%'.request('title').'%');
+        }
+
+        $sort = in_array(request('sort'), ['id', 'title', 'collection_id', 'created_at'], true) ? request('sort') : 'id';
+        $direction = request('direction') === 'desc' ? 'desc' : 'asc';
+        $perPage = min((int) request('per_page', 15), 100);
+
+        $items = $query->orderBy($sort, $direction)->paginate($perPage)->appends(request()->query());
+
         return ItemResource::collection($items);
     }
 
