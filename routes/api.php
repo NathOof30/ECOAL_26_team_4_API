@@ -14,6 +14,8 @@ use App\Http\Resources\UserResource;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('guest');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->middleware('guest');
 
 // Public read routes
 Route::apiResource('users', UsersController::class)->only(['index', 'show']);
