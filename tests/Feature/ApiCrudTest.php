@@ -48,9 +48,9 @@ class ApiCrudTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                 ->assertJsonStructure(['access_token', 'token_type', 'user'])
-                 ->assertJsonPath('user.user_type', 'user')
-                 ->assertJsonPath('user.is_active', true);
+                 ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']])
+                 ->assertJsonPath('data.user.user_type', 'user')
+                 ->assertJsonPath('data.user.is_active', true);
     }
 
     public function test_user_can_login()
@@ -61,7 +61,7 @@ class ApiCrudTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-                 ->assertJsonStructure(['access_token', 'token_type', 'user']);
+                 ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']]);
     }
 
     public function test_authenticated_user_can_get_profile()
@@ -71,7 +71,7 @@ class ApiCrudTest extends TestCase
         $response = $this->getJson('/api/user');
         
         $response->assertStatus(200)
-                 ->assertJson(['email' => 'test@example.com']);
+                 ->assertJsonPath('data.email', 'test@example.com');
     }
 
     public function test_user_can_logout()
@@ -80,7 +80,8 @@ class ApiCrudTest extends TestCase
         
         $response = $this->postJson('/api/logout');
         
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertJsonPath('data.message', 'Successfully logged out');
     }
 
     public function test_can_fetch_public_resources()
@@ -88,9 +89,10 @@ class ApiCrudTest extends TestCase
         // Users list
         $this->getJson('/api/users')
             ->assertStatus(200)
-            ->assertJsonMissingPath('0.email')
-            ->assertJsonMissingPath('0.user_type')
-            ->assertJsonMissingPath('0.is_active');
+            ->assertJsonStructure(['data', 'links', 'meta'])
+            ->assertJsonMissingPath('data.0.email')
+            ->assertJsonMissingPath('data.0.user_type')
+            ->assertJsonMissingPath('data.0.is_active');
         // Categories
         $this->getJson('/api/categories')->assertStatus(200);
         // Collections
@@ -113,7 +115,7 @@ class ApiCrudTest extends TestCase
         ]);
         
         $response->assertStatus(201);
-        $collectionId = $response->json('id');
+        $collectionId = $response->json('data.id');
 
         // 2. Create Item in that Collection
         $itemResponse = $this->postJson('/api/items', [
@@ -124,8 +126,8 @@ class ApiCrudTest extends TestCase
         ]);
         
         $itemResponse->assertStatus(201)
-                     ->assertJson(['collection_id' => $collectionId]); // Verified it is automatically assigned
-        $itemId = $itemResponse->json('id');
+                     ->assertJsonPath('data.collection_id', $collectionId);
+        $itemId = $itemResponse->json('data.id');
 
         // 3. Score the Item
         $scoreResponse = $this->postJson('/api/item-criteria', [
@@ -139,7 +141,7 @@ class ApiCrudTest extends TestCase
         // 4. Read the scores for this item back via public route
         $readScoresResponse = $this->getJson("/api/items/{$itemId}/criteria");
         $readScoresResponse->assertStatus(200);
-        $this->assertCount(1, $readScoresResponse->json());
+        $this->assertCount(1, $readScoresResponse->json('data'));
     }
 
     public function test_admin_can_manage_categories_and_criteria()
@@ -214,5 +216,32 @@ class ApiCrudTest extends TestCase
             'value' => 2,
         ])->assertStatus(409)
             ->assertJson(['message' => 'A score already exists for this item and criterion.']);
+    }
+
+    public function test_public_list_supports_pagination_filters_and_sorting()
+    {
+        Collection::create(['title' => 'Bravo', 'user_id' => $this->user->id]);
+        Collection::create(['title' => 'Alpha', 'user_id' => $this->admin->id]);
+
+        $response = $this->getJson('/api/collections?title=a&sort=title&direction=asc&per_page=1');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure(['data', 'links', 'meta'])
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonPath('data.0.title', 'Alpha');
+    }
+
+    public function test_deactivating_user_revokes_existing_tokens()
+    {
+        $token = $this->user->createToken('test_token')->plainTextToken;
+
+        Sanctum::actingAs($this->admin);
+
+        $this->putJson('/api/users/' . $this->user->id, [
+            'is_active' => false,
+        ])->assertStatus(200)
+            ->assertJsonPath('data.is_active', false);
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 }

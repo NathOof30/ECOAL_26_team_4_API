@@ -75,7 +75,7 @@ class ApiOwnershipTest extends TestCase
         ]);
         
         $response->assertStatus(200);
-        $this->assertEquals('Updated Col 1', $response->json('title'));
+        $this->assertEquals('Updated Col 1', $response->json('data.title'));
     }
 
     public function test_user_cannot_update_other_collection()
@@ -94,7 +94,7 @@ class ApiOwnershipTest extends TestCase
         ]);
         
         $response->assertStatus(200);
-        $this->assertEquals('Updated Item 1', $response->json('title'));
+        $this->assertEquals('Updated Item 1', $response->json('data.title'));
     }
 
     public function test_user_cannot_update_other_item()
@@ -114,7 +114,7 @@ class ApiOwnershipTest extends TestCase
         ]);
         
         $response->assertStatus(200);
-        $this->assertEquals(2, $response->json('value'));
+        $this->assertEquals(2, $response->json('data.value'));
     }
 
     public function test_user_cannot_score_other_item()
@@ -153,7 +153,7 @@ class ApiOwnershipTest extends TestCase
         ]);
 
         $response->assertStatus(201);
-        $this->assertEquals($this->collection1->id, $response->json('collection_id'));
+        $this->assertEquals($this->collection1->id, $response->json('data.collection_id'));
     }
 
     public function test_regular_user_cannot_update_other_user_profile()
@@ -175,9 +175,9 @@ class ApiOwnershipTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('name', 'Updated User 1')
-            ->assertJsonPath('user_type', 'user')
-            ->assertJsonPath('is_active', true);
+            ->assertJsonPath('data.name', 'Updated User 1')
+            ->assertJsonPath('data.user_type', 'user')
+            ->assertJsonPath('data.is_active', true);
     }
 
     public function test_admin_can_update_other_user_role()
@@ -195,8 +195,8 @@ class ApiOwnershipTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('user_type', 'editor')
-            ->assertJsonPath('is_active', false);
+            ->assertJsonPath('data.user_type', 'editor')
+            ->assertJsonPath('data.is_active', false);
     }
 
     public function test_user_cannot_move_item_to_another_collection()
@@ -206,7 +206,7 @@ class ApiOwnershipTest extends TestCase
         ]);
 
         $response->assertStatus(200);
-        $this->assertEquals($this->collection1->id, $response->json('collection_id'));
+        $this->assertEquals($this->collection1->id, $response->json('data.collection_id'));
     }
 
     public function test_admin_cannot_delete_own_account_through_endpoint()
