@@ -1,59 +1,70 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ECOAL API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Authorization model
 
-## About Laravel
+This API now uses three layers:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- `auth:sanctum` in [routes/api.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/routes/api.php) to require authentication.
+- `user_type` middleware in [bootstrap/app.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/bootstrap/app.php) for simple role barriers such as `admin` or `admin,editor`.
+- `Policies` plus `FormRequest::authorize()` for resource-based authorization such as "own profile", "own collection", or "own item".
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Where authorization lives
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Route middleware: fixed role checks that do not depend on a specific record.
+- Policy: ownership and permission checks that depend on the target model.
+- FormRequest: validation plus an authorization entry point that calls the policy before the controller runs.
 
-## Learning Laravel
+## Route map
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Public
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- `POST /api/register`: public. Validation in `RegisterRequest`.
+- `POST /api/login`: public with `throttle:login`. Validation in `LoginRequest`.
+- `GET /api/users`: public read-only.
+- `GET /api/users/{user}`: public read-only.
+- `GET /api/collections`: public read-only.
+- `GET /api/collections/{collection}`: public read-only.
+- `GET /api/categories`: public read-only.
+- `GET /api/categories/{category}`: public read-only.
+- `GET /api/items`: public read-only.
+- `GET /api/items/{item}`: public read-only.
+- `GET /api/criteria`: public read-only.
+- `GET /api/criteria/{criterion}`: public read-only.
+- `GET /api/item-criteria`: public read-only.
+- `GET /api/items/{item}/criteria`: public read-only.
 
-## Laravel Sponsors
+### Authenticated
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- `POST /api/logout`: any authenticated user.
+- `GET /api/user`: any authenticated user.
+- `POST /api/users`: authenticated, then `UserPolicy@create`. Effectively `admin` only.
+- `PUT|PATCH /api/users/{user}`: authenticated, then `UserPolicy@update`. Admin can update anyone; normal user only self.
+- `DELETE /api/users/{user}`: authenticated, then `UserPolicy@delete`. Admin only, and cannot delete self.
+- `POST /api/collections`: authenticated, then `CollectionPolicy@create`.
+- `PUT|PATCH /api/collections/{collection}`: authenticated, then `CollectionPolicy@update`. Owner only.
+- `DELETE /api/collections/{collection}`: authenticated, then `CollectionPolicy@delete`. Owner only.
+- `POST /api/items`: authenticated. Collection ownership is enforced by how the item is attached to the current user collection.
+- `PUT|PATCH /api/items/{item}`: authenticated, then `ItemPolicy@update`. Owner only.
+- `DELETE /api/items/{item}`: authenticated, then `ItemPolicy@delete`. Owner only.
+- `POST /api/item-criteria`: authenticated, then `ItemPolicy@score` through `StoreItemCriteriaRequest`. Item owner only.
+- `PUT /api/items/{item}/criteria/{criterion}`: authenticated, then `ItemPolicy@score`. Item owner only.
+- `DELETE /api/items/{item}/criteria/{criterion}`: authenticated, then `ItemPolicy@score`. Item owner only.
 
-### Premium Partners
+### Authenticated + role
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- `POST|PUT|PATCH|DELETE /api/categories/...`: authenticated plus `user_type:admin,editor`.
+- `POST|PUT|PATCH|DELETE /api/criteria/...`: authenticated plus `user_type:admin,editor`.
 
-## Contributing
+## Main files
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Routes: [routes/api.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/routes/api.php)
+- Middleware alias: [bootstrap/app.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/bootstrap/app.php)
+- Policies registration: [app/Providers/AppServiceProvider.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Providers/AppServiceProvider.php)
+- Policies: [app/Policies/UserPolicy.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Policies/UserPolicy.php), [app/Policies/CollectionPolicy.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Policies/CollectionPolicy.php), [app/Policies/ItemPolicy.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Policies/ItemPolicy.php), [app/Policies/CategoryPolicy.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Policies/CategoryPolicy.php), [app/Policies/CriteriaPolicy.php](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Policies/CriteriaPolicy.php)
+- Requests: [app/Http/Requests](/Users/fevereiro/Documents/GitHub/ECOAL_26_team_4_API/app/Http/Requests)
 
-## Code of Conduct
+## Practical rule
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- If the rule is "must be logged in", use `auth:sanctum`.
+- If the rule is "must have one of these roles", use `user_type`.
+- If the rule is "depends on this record", use a policy.
