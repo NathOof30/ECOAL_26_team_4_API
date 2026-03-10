@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Collections\StoreCollectionRequest;
 use App\Http\Requests\Collections\UpdateCollectionRequest;
+use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
 use App\Support\ApiResponse;
 use Illuminate\Http\Request;
@@ -16,9 +17,8 @@ class CollectionsController extends Controller
      */
     public function index()
     {
-        // Return all collections with their user and items
         $collections = Collection::with(['user', 'items'])->get();
-        return response()->json($collections);
+        return CollectionResource::collection($collections);
     }
 
     /**
@@ -37,7 +37,7 @@ class CollectionsController extends Controller
         $validated['user_id'] = $request->user()->id;
 
         $collection = Collection::create($validated);
-        return response()->json($collection, 201);
+        return (new CollectionResource($collection))->response()->setStatusCode(201);
     }
 
     /**
@@ -47,7 +47,7 @@ class CollectionsController extends Controller
     {
         // Load the collection's user and items
         $collection->load(['user', 'items']);
-        return response()->json($collection);
+        return new CollectionResource($collection);
     }
 
     /**
@@ -58,7 +58,7 @@ class CollectionsController extends Controller
         $validated = $request->validated();
 
         $collection->update($validated);
-        return response()->json($collection);
+        return new CollectionResource($collection);
     }
 
     /**

@@ -5,30 +5,20 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
+use App\Http\Resources\UserPublicResource;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class UsersController extends Controller
 {
-    protected function publicUserData(User $user): array
-    {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'avatar_url' => $user->avatar_url,
-            'nationality' => $user->nationality,
-            'collection' => $user->collection,
-        ];
-    }
-
     /**
      * Display a listing of all users.
      */
     public function index()
     {
-        // Return all users with their collection
         $users = User::with('collection')->get();
-        return response()->json($users->map(fn (User $user) => $this->publicUserData($user)));
+        return UserPublicResource::collection($users);
     }
 
     /**
@@ -42,7 +32,7 @@ class UsersController extends Controller
         $validated['password'] = bcrypt($validated['password']);
 
         $user = User::create($validated);
-        return response()->json($user, 201);
+        return (new UserResource($user))->response()->setStatusCode(201);
     }
 
     /**
@@ -52,7 +42,7 @@ class UsersController extends Controller
     {
         // Load the user's collection and return
         $user->load('collection');
-        return response()->json($this->publicUserData($user));
+        return new UserPublicResource($user);
     }
 
     /**
@@ -74,7 +64,7 @@ class UsersController extends Controller
         }
 
         $user->update($validated);
-        return response()->json($user);
+        return new UserResource($user);
     }
 
     /**

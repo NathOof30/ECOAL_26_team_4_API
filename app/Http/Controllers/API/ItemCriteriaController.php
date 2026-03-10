@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ItemCriteria\StoreItemCriteriaRequest;
 use App\Http\Requests\ItemCriteria\UpdateItemCriteriaRequest;
+use App\Http\Resources\ItemCriteriaResource;
 use App\Models\ItemCriteria;
 use App\Models\Item;
 use App\Models\Criteria;
@@ -19,7 +20,7 @@ class ItemCriteriaController extends Controller
     public function index()
     {
         $scores = ItemCriteria::with(['item', 'criteria'])->get();
-        return response()->json($scores);
+        return ItemCriteriaResource::collection($scores);
     }
 
     /**
@@ -40,7 +41,7 @@ class ItemCriteriaController extends Controller
         }
 
         $score = ItemCriteria::create($validated);
-        return response()->json($score->load(['item', 'criteria']), 201);
+        return (new ItemCriteriaResource($score->load(['item', 'criteria'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -52,7 +53,7 @@ class ItemCriteriaController extends Controller
         $scores = ItemCriteria::where('id_item', $item->id)
                     ->with('criteria')
                     ->get();
-        return response()->json($scores);
+        return ItemCriteriaResource::collection($scores);
     }
 
     /**
@@ -68,7 +69,7 @@ class ItemCriteriaController extends Controller
                     ->firstOrFail();
 
         $score->update($validated);
-        return response()->json($score);
+        return new ItemCriteriaResource($score);
     }
 
     /**

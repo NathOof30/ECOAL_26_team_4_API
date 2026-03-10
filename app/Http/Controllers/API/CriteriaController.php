@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Criteria\StoreCriteriaRequest;
 use App\Http\Requests\Criteria\UpdateCriteriaRequest;
+use App\Http\Resources\CriteriaResource;
 use App\Models\Criteria;
 
 class CriteriaController extends Controller
@@ -15,7 +16,7 @@ class CriteriaController extends Controller
     public function index()
     {
         $criteria = Criteria::all();
-        return response()->json($criteria);
+        return CriteriaResource::collection($criteria);
     }
 
     /**
@@ -26,7 +27,7 @@ class CriteriaController extends Controller
         $validated = $request->validated();
 
         $criterion = Criteria::create($validated);
-        return response()->json($criterion, 201);
+        return (new CriteriaResource($criterion))->response()->setStatusCode(201);
     }
 
     /**
@@ -34,7 +35,7 @@ class CriteriaController extends Controller
      */
     public function show(Criteria $criterion)
     {
-        return response()->json($criterion);
+        return new CriteriaResource($criterion);
     }
 
     /**
@@ -45,7 +46,7 @@ class CriteriaController extends Controller
         $validated = $request->validated();
 
         $criterion->update($validated);
-        return response()->json($criterion);
+        return new CriteriaResource($criterion);
     }
 
     /**

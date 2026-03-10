@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Items\StoreItemRequest;
 use App\Http\Requests\Items\UpdateItemRequest;
+use App\Http\Resources\ItemResource;
 use App\Models\Item;
 use App\Models\Collection;
 use App\Support\ApiResponse;
@@ -17,9 +18,8 @@ class ItemsController extends Controller
      */
     public function index()
     {
-        // Return all items with their relationships
         $items = Item::with(['collection', 'category1', 'category2', 'criteria'])->get();
-        return response()->json($items);
+        return ItemResource::collection($items);
     }
 
     /**
@@ -41,7 +41,7 @@ class ItemsController extends Controller
         $validated['collection_id'] = $collection->id;
 
         $item = Item::create($validated);
-        return response()->json($item->load(['category1', 'category2']), 201);
+        return (new ItemResource($item->load(['category1', 'category2'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -51,7 +51,7 @@ class ItemsController extends Controller
     {
         // Load all relationships for the item
         $item->load(['collection', 'category1', 'category2', 'criteria']);
-        return response()->json($item);
+        return new ItemResource($item);
     }
 
     /**
@@ -62,7 +62,7 @@ class ItemsController extends Controller
         $validated = $request->validated();
 
         $item->update($validated);
-        return response()->json($item->load(['category1', 'category2']));
+        return new ItemResource($item->load(['category1', 'category2']));
     }
 
     /**
