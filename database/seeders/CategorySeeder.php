@@ -13,7 +13,7 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        $file = database_path('data/category.txt');
+        $file = database_path('data/category_copy.txt');
         $lines = array_filter(explode("\n", file_get_contents($file)));
         $header = str_getcsv(array_shift($lines)); // Read header row
 

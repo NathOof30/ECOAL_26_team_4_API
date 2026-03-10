@@ -13,7 +13,7 @@ class ItemsSeeder extends Seeder
      */
     public function run(): void
     {
-        $file = database_path('data/items.txt');
+        $file = database_path('data/items_copy.txt');
         $lines = array_filter(explode("\n", file_get_contents($file)));
         $header = str_getcsv(array_shift($lines)); // Read header row
 

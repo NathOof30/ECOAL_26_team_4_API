@@ -1,0 +1,13 @@
+title,description,image_url,status,collection_id,category1_id,category2_id
+Zippo 1941 Replica,Brushed brass Zippo inspired by the wartime case style. Zippo's windproof chimney design supports one-hand use and the brand's lifetime mechanical guarantee.,https://example.com/images/zippo-1941.jpg,1,1,1,6
+BIC Classic,Disposable BIC pocket lighter introduced in 1973. Child-resistant spark wheel design using butane and built to deliver up to 3000 flames on the Maxi format.,https://example.com/images/bic-classic.jpg,1,1,1,7
+Clipper Original,Refillable lighter with spark wheel ignition and a removable packing tool. Shock resistant body and self-regulating flame.,https://example.com/images/clipper.jpg,1,1,1,7
+Tesla Coil Arc Lighter,USB rechargeable dual plasma arc lighter. Windproof design with around 300 uses per charge.,https://example.com/images/tesla-arc.jpg,1,2,3,7
+Dupont Line 2,Luxury S.T. Dupont lighter from the Ligne 2 family with lacquer finish. The model line is especially known for the signature Cling opening sound highlighted by the brand.,https://example.com/images/dupont-ligne2.jpg,1,2,2,7
+Imco Triplex Super 6700,Vintage Austrian IMCO fluid lighter with spark wheel ignition and an integrated wind guard. IMCO is a historic Austrian lighter maker.,https://example.com/images/imco-triplex.jpg,0,3,1,6
+Ronson Varaflame,Vintage Ronson butane lighter with adjustable flame and chrome body. Ronson is one of the historic lighter brands later acquired by Zippo in North America.,https://example.com/images/ronson-vara.jpg,1,3,1,6
+Trench Lighter,Handmade lighter linked to World War I trench art. Soldier-made objects from or around the trenches are historically documented for that period.,https://example.com/images/briquet-tranchee.jpg,1,4,4,5
+Xikar Allume,High-performance piezoelectric torch lighter for cigars. Stainless steel body with a fuel level indicator.,https://example.com/images/xikar.jpg,0,4,2,7
+Antique Tinder Lighter,Early 19th century tinder lighter with flintlock mechanism. A rare collector's piece with a walnut handle.,https://example.com/images/amadou.jpg,1,5,4,5
+Colibri Quantum,Modern Colibri lighter with triple jet flame and piezoelectric ignition. Reliable and powerful for cigar use.,https://example.com/images/colibri.jpg,1,5,2,7
+Thorens Single Claw,Vintage Swiss Thorens lighter with the brand's button-actuated Single Claw mechanism. Thorens historically produced Swiss-made lighters in addition to phonographs.,https://example.com/images/thorens.jpg,0,5,1,6

@@ -1,0 +1,6 @@
+title,description,user_id
+Jean's Collection,My personal collection of vintage and modern lighters,1
+Marie's Lighters,Collection of rare and original lighters,2
+Lucas's Lighters,Belgian and international collectible lighters,3
+Sophie's Collection,Selection of antique and piezoelectric lighters,4
+Thomas's Lighters,Small collection of Swiss and mechanical lighters,5

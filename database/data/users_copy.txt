@@ -1,0 +1,6 @@
+name,email,password,avatar_url,nationality,is_active,user_type
+Jean Dupont,jean.dupont@email.com,1234,,France,1,admin
+Marie Martin,marie.martin@email.com,1234,,France,1,user
+Lucas Bernard,lucas.bernard@email.com,1234,,Belgium,1,user
+Sophie Lefebvre,sophie.lefebvre@email.com,1234,,France,1,user
+Thomas Moreau,thomas.moreau@email.com,1234,,Switzerland,1,user
