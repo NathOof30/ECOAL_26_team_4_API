@@ -128,3 +128,19 @@ Examples:
 - `GET /api/collections?user_id=1&sort=title&direction=desc`
 - `GET /api/items?collection_id=2&category1_id=1&status=true`
 - `GET /api/item-criteria?id_item=5&sort=id_criteria&direction=asc`
+
+## Audit logs
+
+Security-relevant events are written to `storage/logs/audit.log`.
+
+Current events:
+
+- `auth.login_failed`
+- `auth.login_inactive_user`
+- `auth.login_success`
+- `auth.logout`
+- `users.created`
+- `users.deactivated`
+- `users.role_changed`
+- `users.active_status_changed`
+- `users.deleted`
