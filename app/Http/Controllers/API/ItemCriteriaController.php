@@ -10,6 +10,7 @@ use App\Models\ItemCriteria;
 use App\Models\Item;
 use App\Models\Criteria;
 use App\Support\ApiResponse;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class ItemCriteriaController extends Controller
@@ -49,17 +50,18 @@ class ItemCriteriaController extends Controller
     {
         $validated = $request->validated();
 
-        $item = Item::findOrFail($validated['id_item']);
+        Item::findOrFail($validated['id_item']);
 
-        $alreadyExists = ItemCriteria::where('id_item', $validated['id_item'])
-            ->where('id_criteria', $validated['id_criteria'])
-            ->exists();
+        try {
+            $score = ItemCriteria::create($validated);
+        } catch (QueryException $exception) {
+            if ($this->isDuplicateScoreException($exception)) {
+                return ApiResponse::error('A score already exists for this item and criterion.', 409);
+            }
 
-        if ($alreadyExists) {
-            return ApiResponse::error('A score already exists for this item and criterion.', 409);
+            throw $exception;
         }
 
-        $score = ItemCriteria::create($validated);
         return (new ItemCriteriaResource($score->load(['item', 'criteria'])))->response()->setStatusCode(201);
     }
 
@@ -100,10 +102,23 @@ class ItemCriteriaController extends Controller
     {
         $this->authorize('score', $item);
 
-        ItemCriteria::where('id_item', $item->id)
-                    ->where('id_criteria', $criterion->id_criteria)
-                    ->delete();
+        $deleted = ItemCriteria::where('id_item', $item->id)
+            ->where('id_criteria', $criterion->id_criteria)
+            ->delete();
+
+        if ($deleted === 0) {
+            return ApiResponse::error('Score not found for this item and criterion.', 404);
+        }
 
         return response()->json(null, 204);
+    }
+
+    private function isDuplicateScoreException(QueryException $exception): bool
+    {
+        $message = mb_strtolower($exception->getMessage());
+
+        return str_contains($message, 'unique')
+            || str_contains($message, 'duplicate')
+            || str_contains($message, 'item_criteria');
     }
 }

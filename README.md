@@ -1,5 +1,74 @@
 # ECOAL API
 
+## Quick start
+
+### Requirements
+
+- PHP `^8.2`
+- Composer
+- SQLite
+- Node.js + npm
+
+### Install
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+```
+
+If you want the frontend assets available too:
+
+```bash
+npm install
+npm run build
+```
+
+### Run locally
+
+API only:
+
+```bash
+php artisan serve
+```
+
+Full local stack from the Composer script:
+
+```bash
+composer run dev
+```
+
+### Run tests
+
+```bash
+php artisan test
+```
+
+### Default API flow
+
+1. `POST /api/register` or `POST /api/login`
+2. Copy the returned bearer token
+3. Send `Authorization: Bearer <token>` on protected routes
+4. Use `GET /api/user` to confirm the authenticated profile
+
+Example login request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/login \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"password"}'
+```
+
+Example authenticated request:
+
+```bash
+curl http://127.0.0.1:8000/api/user \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
 ## Authorization model
 
 This API now uses three layers:
