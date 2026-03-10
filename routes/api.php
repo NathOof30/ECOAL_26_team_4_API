@@ -10,6 +10,7 @@ use App\Http\Controllers\API\ItemsController;
 use App\Http\Controllers\API\CriteriaController;
 use App\Http\Controllers\API\ItemCriteriaController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Resources\UserResource;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
@@ -26,7 +27,7 @@ Route::get('items/{item}/criteria', [ItemCriteriaController::class, 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return new UserResource($request->user()->load('collection'));
     });
 
     // Authorization handled by policies/form requests
