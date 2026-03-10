@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -18,13 +19,18 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6', // Add confirmed rule if using password_confirmation
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)->mixedCase()->numbers()->symbols(),
+            ],
             'avatar_url' => 'nullable|string|max:255',
             'nationality' => 'nullable|string|max:255',
-            'user_type' => 'nullable|string|in:admin,editor,user',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['user_type'] = 'user';
+        $validated['is_active'] = true;
 
         $user = User::create($validated);
 
@@ -55,6 +61,14 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
+
+        if (! $user->is_active) {
+            Auth::logout();
+
+            return response()->json([
+                'message' => 'This account is inactive.',
+            ], 403);
+        }
 
         // Optional: Revoke existing tokens for a single-device login
         // $user->tokens()->delete();

@@ -74,7 +74,6 @@ class ItemsController extends Controller
             'description' => 'nullable|string',
             'image_url' => 'nullable|string|max:255',
             'status' => 'sometimes|boolean',
-            'collection_id' => 'sometimes|exists:collections,id',
             'category1_id' => 'sometimes|exists:category,id',
             'category2_id' => 'nullable|exists:category,id',
         ]);
