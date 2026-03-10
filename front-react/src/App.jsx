@@ -5,12 +5,15 @@ import LogViewer from './components/LogViewer.jsx';
 import { setLogCallback } from './api/client.js';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import DashboardPage from './pages/DashboardPage.jsx';
-import CollectionsPage from './pages/CollectionsPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import EditProfilePage from './pages/EditProfilePage.jsx';
+import MyCollectionPage from './pages/MyCollectionPage.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
-import CategoriesPage from './pages/CategoriesPage.jsx';
-import CriteriaPage from './pages/CriteriaPage.jsx';
-import ScoresPage from './pages/ScoresPage.jsx';
+import MyItemsPage from './pages/MyItemsPage.jsx';
+import CollectionsPage from './pages/CollectionsPage.jsx';
+import CollectionDetailsPage from './pages/CollectionDetailsPage.jsx';
+import ItemDetailsPage from './pages/ItemDetailsPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 const MAX_LOGS = 50;
@@ -42,58 +45,58 @@ export default function App() {
   return (
     <Layout>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route
-          path="/collections"
+          path="/profile"
           element={
             <ProtectedRoute>
-              <CollectionsPage />
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={
+            <ProtectedRoute>
+              <EditProfilePage />
             </ProtectedRoute>
           }
         />
         <Route
           path="/items"
+          element={<ItemsPage />}
+        />
+        <Route
+          path="/items/:id"
+          element={<ItemDetailsPage />}
+        />
+        <Route
+          path="/collections"
+          element={<CollectionsPage />}
+        />
+        <Route
+          path="/collections/:id"
+          element={<CollectionDetailsPage />}
+        />
+        <Route
+          path="/my-collection"
           element={
             <ProtectedRoute>
-              <ItemsPage />
+              <MyCollectionPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/categories"
+          path="/my-items"
           element={
             <ProtectedRoute>
-              <CategoriesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/criteria"
-          element={
-            <ProtectedRoute>
-              <CriteriaPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/scores"
-          element={
-            <ProtectedRoute>
-              <ScoresPage />
+              <MyItemsPage />
             </ProtectedRoute>
           }
         />
       </Routes>
-      <LogViewer logs={logs} lastEntry={lastEntry} onClear={handleClearLogs} />
     </Layout>
   );
 }

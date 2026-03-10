@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function LoginPage() {
@@ -11,45 +11,55 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     await login(email, password);
-    if (!loading && !error) {
-      if (token) {
-        navigate('/');
-      }
+    if (token) {
+      navigate('/');
     }
   }
 
   return (
-    <section>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            Email:{' '}
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </label>
+    <div className="auth-screen">
+      <div>
+        <div className="auth-hero-title">Light It</div>
+        <div className="auth-hero-sub">Bring the light to your collection</div>
+      </div>
+      <div className="auth-card">
+        <h2>Login</h2>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label>
+              Email
+              <br />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              Password
+              <br />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </label>
+          </div>
+          <button type="submit" disabled={loading}>
+            Login
+          </button>
+        </form>
+        {error && <div className="auth-footer-text">Error: {error}</div>}
+        <div className="auth-footer-text">Forgot your password?</div>
+        <div className="auth-footer-text">
+          Don&apos;t have an account? <Link to="/register">Become a collector</Link>
         </div>
-        <div>
-          <label>
-            Mot de passe:{' '}
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <button type="submit" disabled={loading}>
-          Se connecter
-        </button>
-      </form>
-      {error && <div>Erreur: {error}</div>}
-    </section>
+      </div>
+    </div>
   );
 }
 

@@ -34,6 +34,10 @@ export function AuthProvider({ children }) {
     if (res.ok && res.json) {
       setUser(res.json);
     } else {
+      if (res.status === 401) {
+        setToken(''); // Clears token and will update localStorage through useEffect
+        setUser(null);
+      }
       setError('Impossible de récupérer le profil.');
     }
     setLoading(false);
