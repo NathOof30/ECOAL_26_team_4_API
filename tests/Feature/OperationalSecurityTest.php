@@ -14,6 +14,7 @@ class OperationalSecurityTest extends TestCase
     {
         config()->set('security.tokens.revoke_existing_on_login', false);
         config()->set('cors.allowed_origins', ['http://localhost', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173']);
+        config()->set('api.legacy_routes_enabled', false);
 
         parent::tearDown();
     }
@@ -23,7 +24,10 @@ class OperationalSecurityTest extends TestCase
         $this->getJson('/health/live')
             ->assertOk()
             ->assertJsonPath('status', 'ok')
-            ->assertJsonStructure(['status', 'app', 'version', 'environment', 'timestamp']);
+            ->assertJsonStructure(['status', 'app', 'version', 'environment', 'timestamp'])
+            ->assertHeader('X-Request-Id')
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY');
     }
 
     public function test_health_ready_returns_database_check_status(): void
@@ -67,5 +71,15 @@ class OperationalSecurityTest extends TestCase
         ])->assertOk();
 
         $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
+    public function test_legacy_api_routes_are_disabled_by_default(): void
+    {
+        config()->set('api.legacy_routes_enabled', false);
+
+        $this->postJson('/api/login', [
+            'email' => 'test@example.com',
+            'password' => 'password',
+        ])->assertNotFound();
     }
 }

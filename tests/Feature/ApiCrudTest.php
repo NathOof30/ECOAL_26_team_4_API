@@ -40,7 +40,7 @@ class ApiCrudTest extends TestCase
 
     public function test_user_can_register()
     {
-        $response = $this->postJson('/api/register', [
+        $response = $this->postJson('/api/v1/register', [
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => 'StrongPass1!',
@@ -56,7 +56,7 @@ class ApiCrudTest extends TestCase
 
     public function test_user_can_login()
     {
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'password',
         ]);
@@ -100,7 +100,7 @@ class ApiCrudTest extends TestCase
 
     public function test_user_can_request_password_reset_link()
     {
-        $response = $this->postJson('/api/forgot-password', [
+        $response = $this->postJson('/api/v1/forgot-password', [
             'email' => 'test@example.com',
         ]);
 
@@ -134,7 +134,7 @@ class ApiCrudTest extends TestCase
     {
         $token = Password::broker()->createToken($this->user);
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson('/api/v1/reset-password', [
             'email' => 'test@example.com',
             'token' => $token,
             'password' => 'NewStrongPass1!',
@@ -144,7 +144,7 @@ class ApiCrudTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.message', __(Password::PASSWORD_RESET));
 
-        $this->postJson('/api/login', [
+        $this->postJson('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'NewStrongPass1!',
         ])->assertStatus(200);
@@ -167,7 +167,7 @@ class ApiCrudTest extends TestCase
     {
         Sanctum::actingAs($this->user);
         
-        $response = $this->getJson('/api/user');
+        $response = $this->getJson('/api/v1/user');
         
         $response->assertStatus(200)
                  ->assertJsonPath('data.email', 'test@example.com');
@@ -177,7 +177,7 @@ class ApiCrudTest extends TestCase
     {
         Sanctum::actingAs($this->user);
         
-        $response = $this->postJson('/api/logout');
+        $response = $this->postJson('/api/v1/logout');
         
         $response->assertStatus(200)
             ->assertJsonPath('data.message', 'Successfully logged out');
@@ -186,20 +186,20 @@ class ApiCrudTest extends TestCase
     public function test_can_fetch_public_resources()
     {
         // Users list
-        $this->getJson('/api/users')
+        $this->getJson('/api/v1/users')
             ->assertStatus(200)
             ->assertJsonStructure(['data', 'links', 'meta'])
             ->assertJsonMissingPath('data.0.email')
             ->assertJsonMissingPath('data.0.user_type')
             ->assertJsonMissingPath('data.0.is_active');
         // Categories
-        $this->getJson('/api/categories')->assertStatus(200);
+        $this->getJson('/api/v1/categories')->assertStatus(200);
         // Collections
-        $this->getJson('/api/collections')->assertStatus(200);
+        $this->getJson('/api/v1/collections')->assertStatus(200);
         // Items
-        $this->getJson('/api/items')->assertStatus(200);
+        $this->getJson('/api/v1/items')->assertStatus(200);
         // Criteria
-        $this->getJson('/api/criteria')->assertStatus(200);
+        $this->getJson('/api/v1/criteria')->assertStatus(200);
     }
 
     public function test_user_can_create_and_manage_collection_and_item()
@@ -208,7 +208,7 @@ class ApiCrudTest extends TestCase
         Sanctum::actingAs($this->user);
 
         // 1. Create Collection
-        $response = $this->postJson('/api/collections', [
+        $response = $this->postJson('/api/v1/collections', [
             'title' => 'My First Collection',
             'description' => 'Test description',
         ]);
@@ -217,7 +217,7 @@ class ApiCrudTest extends TestCase
         $collectionId = $response->json('data.id');
 
         // 2. Create Item in that Collection
-        $itemResponse = $this->postJson('/api/items', [
+        $itemResponse = $this->postJson('/api/v1/items', [
             'title' => 'My First Item',
             'description' => 'A shiny new item',
             'status' => true,
@@ -229,7 +229,7 @@ class ApiCrudTest extends TestCase
         $itemId = $itemResponse->json('data.id');
 
         // 3. Score the Item
-        $scoreResponse = $this->postJson('/api/item-criteria', [
+        $scoreResponse = $this->postJson('/api/v1/item-criteria', [
             'id_item' => $itemId,
             'id_criteria' => $this->criteria->id_criteria,
             'value' => 2,
@@ -238,7 +238,7 @@ class ApiCrudTest extends TestCase
         $scoreResponse->assertStatus(201);
 
         // 4. Read the scores for this item back via public route
-        $readScoresResponse = $this->getJson("/api/items/{$itemId}/criteria");
+        $readScoresResponse = $this->getJson("/api/v1/items/{$itemId}/criteria");
         $readScoresResponse->assertStatus(200);
         $this->assertCount(1, $readScoresResponse->json('data'));
     }
@@ -248,7 +248,7 @@ class ApiCrudTest extends TestCase
         Sanctum::actingAs($this->admin);
 
         // Create Category
-        $catResponse = $this->postJson('/api/categories', [
+        $catResponse = $this->postJson('/api/v1/categories', [
             'title' => 'Admin Category',
         ]);
         $catResponse->assertStatus(201);
@@ -256,12 +256,12 @@ class ApiCrudTest extends TestCase
         // Update Category
         $categoryId = $catResponse->json('data.id');
 
-        $this->putJson('/api/categories/' . $categoryId, [
+        $this->putJson('/api/v1/categories/' . $categoryId, [
             'title' => 'Updated Admin Category',
         ])->assertStatus(200);
 
         // Delete Category
-        $this->deleteJson('/api/categories/' . $categoryId)
+        $this->deleteJson('/api/v1/categories/' . $categoryId)
              ->assertStatus(204);
 
         // Note: For criteria we assume the same structure but note that the current migrations map an explicit string primary key or similar for Criteria, 
@@ -272,7 +272,7 @@ class ApiCrudTest extends TestCase
     {
         $this->user->update(['is_active' => false]);
 
-        $response = $this->postJson('/api/login', [
+        $response = $this->postJson('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'password',
         ]);
@@ -285,7 +285,7 @@ class ApiCrudTest extends TestCase
     {
         Sanctum::actingAs($this->user);
 
-        $this->postJson('/api/categories', [
+        $this->postJson('/api/v1/categories', [
             'title' => 'Blocked Category',
         ])->assertStatus(403);
     }
@@ -305,13 +305,13 @@ class ApiCrudTest extends TestCase
             'category1_id' => $this->category->id,
         ]);
 
-        $this->postJson('/api/item-criteria', [
+        $this->postJson('/api/v1/item-criteria', [
             'id_item' => $item->id,
             'id_criteria' => $this->criteria->id_criteria,
             'value' => 1,
         ])->assertStatus(201);
 
-        $this->postJson('/api/item-criteria', [
+        $this->postJson('/api/v1/item-criteria', [
             'id_item' => $item->id,
             'id_criteria' => $this->criteria->id_criteria,
             'value' => 2,
@@ -334,7 +334,7 @@ class ApiCrudTest extends TestCase
             'category1_id' => $this->category->id,
         ]);
 
-        $this->deleteJson("/api/items/{$item->id}/criteria/{$this->criteria->id_criteria}")
+        $this->deleteJson("/api/v1/items/{$item->id}/criteria/{$this->criteria->id_criteria}")
             ->assertStatus(404)
             ->assertJson(['message' => 'Score not found for this item and criterion.']);
     }
@@ -344,7 +344,7 @@ class ApiCrudTest extends TestCase
         Collection::create(['title' => 'Bravo', 'user_id' => $this->user->id]);
         Collection::create(['title' => 'Alpha', 'user_id' => $this->admin->id]);
 
-        $response = $this->getJson('/api/collections?title=a&sort=title&direction=asc&per_page=1');
+        $response = $this->getJson('/api/v1/collections?title=a&sort=title&direction=asc&per_page=1');
 
         $response->assertStatus(200)
             ->assertJsonStructure(['data', 'links', 'meta'])
@@ -358,7 +358,7 @@ class ApiCrudTest extends TestCase
 
         Sanctum::actingAs($this->admin);
 
-        $this->putJson('/api/users/' . $this->user->id, [
+        $this->putJson('/api/v1/users/' . $this->user->id, [
             'is_active' => false,
         ])->assertStatus(200)
             ->assertJsonPath('data.is_active', false);

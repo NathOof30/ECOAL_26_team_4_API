@@ -70,7 +70,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_can_update_own_collection()
     {
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/collections/' . $this->collection1->id, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/collections/' . $this->collection1->id, [
             'title' => 'Updated Col 1'
         ]);
         
@@ -80,7 +80,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_cannot_update_other_collection()
     {
-        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/collections/' . $this->collection1->id, [
+        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/v1/collections/' . $this->collection1->id, [
             'title' => 'Hacked Col 1'
         ]);
         
@@ -89,7 +89,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_can_update_own_item()
     {
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/items/' . $this->item1->id, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/items/' . $this->item1->id, [
             'title' => 'Updated Item 1'
         ]);
         
@@ -99,7 +99,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_cannot_update_other_item()
     {
-        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/items/' . $this->item1->id, [
+        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/v1/items/' . $this->item1->id, [
             'title' => 'Hacked Item 1'
         ]);
         
@@ -109,7 +109,7 @@ class ApiOwnershipTest extends TestCase
     public function test_user_can_score_own_item()
     {
         // Try to update the score mapped to crit1
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/items/' . $this->item1->id . '/criteria/' . $this->crit1->id_criteria, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/items/' . $this->item1->id . '/criteria/' . $this->crit1->id_criteria, [
             'value' => 2
         ]);
         
@@ -119,7 +119,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_cannot_score_other_item()
     {
-        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/items/' . $this->item1->id . '/criteria/' . $this->crit1->id_criteria, [
+        $response = $this->actingAs($this->user2, 'sanctum')->putJson('/api/v1/items/' . $this->item1->id . '/criteria/' . $this->crit1->id_criteria, [
             'value' => 2
         ]);
         
@@ -128,26 +128,26 @@ class ApiOwnershipTest extends TestCase
 
     public function test_api_public_routes_work_without_auth()
     {
-        $response = $this->getJson('/api/items');
+        $response = $this->getJson('/api/v1/items');
         $response->assertStatus(200);
 
-        $response = $this->getJson('/api/collections');
+        $response = $this->getJson('/api/v1/collections');
         $response->assertStatus(200);
 
-        $response = $this->getJson('/api/categories');
+        $response = $this->getJson('/api/v1/categories');
         $response->assertStatus(200);
 
-        $response = $this->getJson('/api/criteria');
+        $response = $this->getJson('/api/v1/criteria');
         $response->assertStatus(200);
 
-        $response = $this->getJson('/api/users');
+        $response = $this->getJson('/api/v1/users');
         $response->assertStatus(200);
     }
 
     public function test_user_can_create_item_automatically_assigned_to_collection()
     {
         // $this->user1 has $this->collection1
-        $response = $this->actingAs($this->user1, 'sanctum')->postJson('/api/items', [
+        $response = $this->actingAs($this->user1, 'sanctum')->postJson('/api/v1/items', [
             'title' => 'New Item',
             'category1_id' => $this->cat1->id,
         ]);
@@ -158,7 +158,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_regular_user_cannot_update_other_user_profile()
     {
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/users/' . $this->user2->id, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/users/' . $this->user2->id, [
             'name' => 'Nope',
         ]);
 
@@ -168,7 +168,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_regular_user_cannot_escalate_own_role_or_active_flag()
     {
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/users/' . $this->user1->id, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/users/' . $this->user1->id, [
             'user_type' => 'admin',
             'is_active' => false,
             'name' => 'Updated User 1',
@@ -189,7 +189,7 @@ class ApiOwnershipTest extends TestCase
             'user_type' => 'admin',
         ]);
 
-        $response = $this->actingAs($admin, 'sanctum')->putJson('/api/users/' . $this->user1->id, [
+        $response = $this->actingAs($admin, 'sanctum')->putJson('/api/v1/users/' . $this->user1->id, [
             'user_type' => 'editor',
             'is_active' => false,
         ]);
@@ -201,7 +201,7 @@ class ApiOwnershipTest extends TestCase
 
     public function test_user_cannot_move_item_to_another_collection()
     {
-        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/items/' . $this->item1->id, [
+        $response = $this->actingAs($this->user1, 'sanctum')->putJson('/api/v1/items/' . $this->item1->id, [
             'collection_id' => $this->collection2->id,
         ]);
 
@@ -218,7 +218,7 @@ class ApiOwnershipTest extends TestCase
             'user_type' => 'admin',
         ]);
 
-        $response = $this->actingAs($admin, 'sanctum')->deleteJson('/api/users/' . $admin->id);
+        $response = $this->actingAs($admin, 'sanctum')->deleteJson('/api/v1/users/' . $admin->id);
 
         $response->assertStatus(403)
             ->assertJson(['message' => 'You cannot delete your own account through this endpoint.']);
