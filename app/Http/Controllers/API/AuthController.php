@@ -34,7 +34,7 @@ class AuthController extends Controller
         $user = User::create($validated);
 
         // Create Sanctum token
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken(config('security.tokens.name'))->plainTextToken;
 
         return response()->json([
             'data' => [
@@ -80,10 +80,11 @@ class AuthController extends Controller
 
         RateLimiter::clear($credentials['email'].'|'.$request->ip());
 
-        // Optional: Revoke existing tokens for a single-device login
-        // $user->tokens()->delete();
+        if (config('security.tokens.revoke_existing_on_login')) {
+            $user->tokens()->delete();
+        }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken(config('security.tokens.name'))->plainTextToken;
 
         Log::channel('audit')->info('auth.login_success', [
             'user_id' => $user->id,
