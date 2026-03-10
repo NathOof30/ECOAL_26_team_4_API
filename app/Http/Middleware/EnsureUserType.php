@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\ApiResponse;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,11 +14,11 @@ class EnsureUserType
         $user = $request->user();
 
         if (! $user) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return ApiResponse::error('Unauthenticated.', 401);
         }
 
         if (! in_array($user->user_type, $allowedTypes, true)) {
-            return response()->json(['message' => 'Forbidden. Insufficient permissions.'], 403);
+            return ApiResponse::error('Forbidden. Insufficient permissions.', 403);
         }
 
         return $next($request);
