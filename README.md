@@ -98,6 +98,15 @@ Production-oriented settings to review before deploy:
 - item write payloads now use `category_ids` and item responses expose `categories`
 - item filtering supports `collection_id` and `category_id`
 
+### Avatar fields
+
+- `avatar_url` is for remote or hosted avatar images
+- `avatar_hash` is a local-only avatar reference meant for frontend clients
+- when the API receives `avatar_hash`, it stores only that identifier and does not store or serve any image file
+- `avatar_url` and `avatar_hash` can coexist on the same user
+- sending one field does not automatically clear the other
+- sending `null` or an empty string clears the specific field that was sent
+
 ### Request tracing and headers
 
 - API responses include `X-Request-Id` for request tracing
