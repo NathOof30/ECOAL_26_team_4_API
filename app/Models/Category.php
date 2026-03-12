@@ -33,18 +33,10 @@ class Category extends Model
     ];
 
     /**
-     * Items that have this as their primary category.
+     * Items linked to this category.
      */
-    public function itemsAsCategory1()
+    public function items()
     {
-        return $this->hasMany(Item::class, 'category1_id');
-    }
-
-    /**
-     * Items that have this as their secondary category.
-     */
-    public function itemsAsCategory2()
-    {
-        return $this->hasMany(Item::class, 'category2_id');
+        return $this->belongsToMany(Item::class, 'items_categories', 'id_category', 'id_item');
     }
 }

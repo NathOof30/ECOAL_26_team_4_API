@@ -21,9 +21,6 @@ class Item extends Model
         'description',
         'image_url',
         'status',
-        'collection_id',
-        'category1_id',
-        'category2_id',
     ];
 
     /**
@@ -41,25 +38,44 @@ class Item extends Model
     /**
      * An item belongs to a collection.
      */
-    public function collection()
+    public function collections()
     {
-        return $this->belongsTo(Collection::class);
+        return $this->belongsToMany(Collection::class, 'collections_items', 'id_item', 'id_collection');
     }
 
     /**
-     * An item belongs to a primary category (e.g. Mécanisme).
+     * Categories linked to this item.
      */
-    public function category1()
+    public function categories()
     {
-        return $this->belongsTo(Category::class, 'category1_id');
+        return $this->belongsToMany(Category::class, 'items_categories', 'id_item', 'id_category');
     }
 
-    /**
-     * An item optionally belongs to a secondary category (e.g. Période).
-     */
-    public function category2()
+    public function collection(): ?Collection
     {
-        return $this->belongsTo(Category::class, 'category2_id');
+        if ($this->relationLoaded('collections')) {
+            return $this->collections->first();
+        }
+
+        return $this->collections()->first();
+    }
+
+    public function category1(): ?Category
+    {
+        if ($this->relationLoaded('categories')) {
+            return $this->categories->get(0);
+        }
+
+        return $this->categories()->orderBy('category.id')->first();
+    }
+
+    public function category2(): ?Category
+    {
+        if ($this->relationLoaded('categories')) {
+            return $this->categories->get(1);
+        }
+
+        return $this->categories()->orderBy('category.id')->skip(1)->first();
     }
 
     /**
@@ -69,5 +85,20 @@ class Item extends Model
     {
         return $this->belongsToMany(Criteria::class, 'item_criteria', 'id_item', 'id_criteria')
                     ->withPivot('value');
+    }
+
+    public function getCollectionIdAttribute(): ?int
+    {
+        return $this->collection()?->id;
+    }
+
+    public function getCategory1IdAttribute(): ?int
+    {
+        return $this->category1()?->id;
+    }
+
+    public function getCategory2IdAttribute(): ?int
+    {
+        return $this->category2()?->id;
     }
 }

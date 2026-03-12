@@ -19,20 +19,36 @@ class ItemsSeeder extends Seeder
 
         foreach ($lines as $line) {
             $data = str_getcsv($line);
-            if (count($data) < count($header)) continue;
+            if (count($data) < count($header)) {
+                continue;
+            }
 
             $row = array_combine($header, $data);
 
-            DB::table('items')->insert([
+            $itemId = DB::table('items')->insertGetId([
                 'title' => $row['title'],
                 'description' => $row['description'] ?: null,
                 'image_url' => $row['image_url'] ?: null,
                 'status' => (bool) $row['status'],
-                'collection_id' => (int) $row['collection_id'],
-                'category1_id' => (int) $row['category1_id'],
-                'category2_id' => $row['category2_id'] ? (int) $row['category2_id'] : null,
                 'created_at' => now(),
             ]);
+
+            DB::table('collections_items')->insert([
+                'id_collection' => (int) $row['collection_id'],
+                'id_item' => $itemId,
+            ]);
+
+            DB::table('items_categories')->insert([
+                'id_item' => $itemId,
+                'id_category' => (int) $row['category1_id'],
+            ]);
+
+            if (! empty($row['category2_id'])) {
+                DB::table('items_categories')->insert([
+                    'id_item' => $itemId,
+                    'id_category' => (int) $row['category2_id'],
+                ]);
+            }
         }
     }
 }
