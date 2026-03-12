@@ -101,6 +101,7 @@ Production-oriented settings to review before deploy:
 ### Avatar fields
 
 - `avatar_url` is for remote or hosted avatar images
+- `avatar_url` accepts longer hosted URLs, including signed CDN URLs
 - `avatar_hash` is a local-only avatar reference meant for frontend clients
 - when the API receives `avatar_hash`, it stores only that identifier and does not store or serve any image file
 - `avatar_url` and `avatar_hash` can coexist on the same user

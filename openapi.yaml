@@ -1491,7 +1491,8 @@ components:
         avatar_url:
           type: string
           nullable: true
-          description: Remote or hosted avatar URL.
+          maxLength: 2048
+          description: Remote or hosted avatar URL, including longer signed CDN URLs.
         avatar_hash:
           type: string
           nullable: true
@@ -1517,7 +1518,8 @@ components:
         avatar_url:
           type: string
           nullable: true
-          description: Remote or hosted avatar URL.
+          maxLength: 2048
+          description: Remote or hosted avatar URL, including longer signed CDN URLs.
         avatar_hash:
           type: string
           nullable: true
@@ -1579,7 +1581,8 @@ components:
         avatar_url:
           type: string
           nullable: true
-          description: Remote or hosted avatar URL.
+          maxLength: 2048
+          description: Remote or hosted avatar URL, including longer signed CDN URLs.
         avatar_hash:
           type: string
           nullable: true
