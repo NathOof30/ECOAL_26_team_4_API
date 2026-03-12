@@ -569,8 +569,9 @@ paths:
                       image_url: null
                       status: true
                       collection_id: 1
-                      category1_id: 1
-                      category2_id: null
+                      categories:
+                        - id: 1
+                          title: Test Category
         '404':
           description: Resource not found
           content:
@@ -1000,7 +1001,7 @@ paths:
     get:
       tags: [Items]
       summary: List items
-      description: Public item fields such as `collection_id`, `category1_id`, and `category2_id` are compatibility fields exposed by the API. Internally the application resolves them through the `collections_items` and `items_categories` pivot tables.
+      description: Items are linked internally through `collections_items` and `items_categories`. The public contract keeps `collection_id` as a singular field and exposes categories as an array.
       parameters:
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Direction'
@@ -1009,14 +1010,9 @@ paths:
           description: Filters items by the resolved collection relation.
           schema:
             type: integer
-        - name: category1_id
+        - name: category_id
           in: query
-          description: Filters items by the first resolved category slot.
-          schema:
-            type: integer
-        - name: category2_id
-          in: query
-          description: Filters items by the second resolved category slot.
+          description: Filters items by a related category.
           schema:
             type: integer
         - name: status
@@ -1047,17 +1043,14 @@ paths:
                     image_url: null
                     status: true
                     collection_id: 1
-                    category1_id: 1
-                    category2_id: null
                     collection:
                       id: 1
                       title: My First Collection
                       description: Test description
                       user_id: 1
-                    category1:
-                      id: 1
-                      title: Test Category
-                    category2: null
+                    categories:
+                      - id: 1
+                        title: Test Category
                     criteria: []
                 links:
                   first: http://127.0.0.1:8000/api/v1/items?page=1
@@ -1071,7 +1064,7 @@ paths:
     post:
       tags: [Items]
       summary: Create an item in the authenticated user's collection
-      description: The item is internally associated to the authenticated user's collection through `collections_items`. Category fields remain part of the public contract and are mapped internally to `items_categories`.
+      description: The item is internally associated to the authenticated user's collection through `collections_items`. Categories are mapped internally to `items_categories`.
       security:
         - bearerAuth: []
       requestBody:
@@ -1084,8 +1077,7 @@ paths:
               title: My First Item
               description: A shiny new item
               status: true
-              category1_id: 1
-              category2_id: null
+              category_ids: [1, 6]
       responses:
         '201':
           description: Item created
@@ -1113,7 +1105,7 @@ paths:
     get:
       tags: [Items]
       summary: Show an item
-      description: Item relationship fields are exposed as stable compatibility fields even though the internal model uses pivot tables.
+      description: Item categories are exposed as an array, matching the many-to-many relation.
       parameters:
         - $ref: '#/components/parameters/ItemId'
       responses:
@@ -1135,24 +1127,21 @@ paths:
                   image_url: null
                   status: true
                   collection_id: 1
-                  category1_id: 1
-                  category2_id: null
                   collection:
                     id: 1
                     title: My First Collection
                     description: Test description
                     user_id: 1
-                  category1:
-                    id: 1
-                    title: Test Category
-                  category2: null
+                  categories:
+                    - id: 1
+                      title: Test Category
                   criteria:
                     - id_criteria: 1
                       name: Test Criterion
     put:
       tags: [Items]
       summary: Update an item
-      description: Category compatibility fields are mapped internally to the `items_categories` pivot table.
+      description: Category updates replace the related `items_categories` entries for the item.
       security:
         - bearerAuth: []
       parameters:
@@ -1167,7 +1156,7 @@ paths:
               title: Updated Item
               description: Refined item description
               status: false
-              category1_id: 1
+              category_ids: [1, 7]
       responses:
         '200':
           description: Item updated
@@ -1187,8 +1176,11 @@ paths:
                   image_url: null
                   status: false
                   collection_id: 1
-                  category1_id: 1
-                  category2_id: null
+                  categories:
+                    - id: 1
+                      title: Test Category
+                    - id: 7
+                      title: Modern
         '403':
           description: Forbidden
           content:
@@ -1198,7 +1190,7 @@ paths:
     patch:
       tags: [Items]
       summary: Partially update an item
-      description: Category compatibility fields are mapped internally to the `items_categories` pivot table.
+      description: Category updates replace the related `items_categories` entries for the item.
       security:
         - bearerAuth: []
       parameters:
@@ -1286,8 +1278,9 @@ paths:
                       image_url: null
                       status: true
                       collection_id: 1
-                      category1_id: 1
-                      category2_id: null
+                      categories:
+                        - id: 1
+                          title: Test Category
                     criteria:
                       id_criteria: 1
                       name: Test Criterion
@@ -1595,7 +1588,7 @@ components:
           type: string
     ItemWriteRequest:
       type: object
-      description: Public write contract for items. Category fields are compatibility fields that are mapped internally to the `items_categories` pivot table.
+      description: Public write contract for items. Categories are managed as a many-to-many relation through the `items_categories` pivot table.
       properties:
         title:
           type: string
@@ -1607,13 +1600,12 @@ components:
           nullable: true
         status:
           type: boolean
-        category1_id:
-          type: integer
-          description: Primary category compatibility field exposed by the API.
-        category2_id:
-          type: integer
-          nullable: true
-          description: Secondary category compatibility field exposed by the API.
+        category_ids:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+          description: Category identifiers to associate with the item.
     ItemCriteriaWriteRequest:
       type: object
       required: [id_item, id_criteria, value]
@@ -1785,7 +1777,7 @@ components:
           type: string
     Item:
       type: object
-      description: Public item representation. `collection_id`, `category1_id`, and `category2_id` are stable API fields derived from pivot-backed relations rather than direct foreign key columns on `items`.
+      description: Public item representation. `collection_id` remains singular because each item belongs to one collection, while categories are exposed as an array matching the many-to-many relation.
       properties:
         id:
           type: integer
@@ -1803,26 +1795,19 @@ components:
         collection_id:
           type: integer
           description: Resolved collection identifier exposed for client compatibility.
-        category1_id:
-          type: integer
-          description: Resolved primary category identifier exposed for client compatibility.
-        category2_id:
-          type: integer
-          nullable: true
-          description: Resolved secondary category identifier exposed for client compatibility.
         collection:
           $ref: '#/components/schemas/CollectionSummary'
-        category1:
-          $ref: '#/components/schemas/Category'
-        category2:
-          $ref: '#/components/schemas/Category'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
         criteria:
           type: array
           items:
             $ref: '#/components/schemas/Criteria'
     ItemSummary:
       type: object
-      description: Condensed item representation using the same compatibility fields exposed by the full item schema.
+      description: Condensed item representation using the same collection and categories contract exposed by the full item schema.
       properties:
         id:
           type: integer
@@ -1840,13 +1825,10 @@ components:
         collection_id:
           type: integer
           description: Resolved collection identifier exposed for client compatibility.
-        category1_id:
-          type: integer
-          description: Resolved primary category identifier exposed for client compatibility.
-        category2_id:
-          type: integer
-          nullable: true
-          description: Resolved secondary category identifier exposed for client compatibility.
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
     ItemCriteria:
       type: object
       properties:

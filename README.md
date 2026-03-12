@@ -94,9 +94,9 @@ Production-oriented settings to review before deploy:
 
 - the internal relational model uses `collections_items` for the collection-item association
 - the internal relational model uses `items_categories` for the item-category many-to-many association
-- externally, the API contract remains stable for clients and still exposes `collection_id`, `category1_id`, and `category2_id` in item responses
-- item filters and write payloads continue to accept `collection_id`, `category1_id`, and `category2_id`
-- these public fields are compatibility fields derived from the pivot-backed model, not direct foreign key columns on `items`
+- item responses expose a singular `collection_id` because each item still belongs to one collection
+- item write payloads now use `category_ids` and item responses expose `categories`
+- item filtering supports `collection_id` and `category_id`
 
 ### Request tracing and headers
 
@@ -261,10 +261,10 @@ Examples:
 
 - `GET /api/v1/users?name=joao&sort=name&direction=asc&per_page=10`
 - `GET /api/v1/collections?user_id=1&sort=title&direction=desc`
-- `GET /api/v1/items?collection_id=2&category1_id=1&status=true`
+- `GET /api/v1/items?collection_id=2&category_id=1&status=true`
 - `GET /api/v1/item-criteria?id_item=5&sort=id_criteria&direction=asc`
 
-For `items`, `collection_id`, `category1_id`, and `category2_id` are API-level compatibility filters. Internally they are resolved through `collections_items` and `items_categories`.
+For `items`, `collection_id` is resolved through `collections_items` and `category_id` is resolved through `items_categories`.
 
 ## Password reset flow
 
