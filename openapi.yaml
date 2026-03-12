@@ -1000,19 +1000,23 @@ paths:
     get:
       tags: [Items]
       summary: List items
+      description: Public item fields such as `collection_id`, `category1_id`, and `category2_id` are compatibility fields exposed by the API. Internally the application resolves them through the `collections_items` and `items_categories` pivot tables.
       parameters:
         - $ref: '#/components/parameters/PerPage'
         - $ref: '#/components/parameters/Direction'
         - name: collection_id
           in: query
+          description: Filters items by the resolved collection relation.
           schema:
             type: integer
         - name: category1_id
           in: query
+          description: Filters items by the first resolved category slot.
           schema:
             type: integer
         - name: category2_id
           in: query
+          description: Filters items by the second resolved category slot.
           schema:
             type: integer
         - name: status
@@ -1032,9 +1036,9 @@ paths:
         '200':
           description: Paginated items
           content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ItemCollectionResponse'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemCollectionResponse'
               example:
                 data:
                   - id: 1
@@ -1067,6 +1071,7 @@ paths:
     post:
       tags: [Items]
       summary: Create an item in the authenticated user's collection
+      description: The item is internally associated to the authenticated user's collection through `collections_items`. Category fields remain part of the public contract and are mapped internally to `items_categories`.
       security:
         - bearerAuth: []
       requestBody:
@@ -1108,6 +1113,7 @@ paths:
     get:
       tags: [Items]
       summary: Show an item
+      description: Item relationship fields are exposed as stable compatibility fields even though the internal model uses pivot tables.
       parameters:
         - $ref: '#/components/parameters/ItemId'
       responses:
@@ -1146,6 +1152,7 @@ paths:
     put:
       tags: [Items]
       summary: Update an item
+      description: Category compatibility fields are mapped internally to the `items_categories` pivot table.
       security:
         - bearerAuth: []
       parameters:
@@ -1191,6 +1198,7 @@ paths:
     patch:
       tags: [Items]
       summary: Partially update an item
+      description: Category compatibility fields are mapped internally to the `items_categories` pivot table.
       security:
         - bearerAuth: []
       parameters:
@@ -1587,6 +1595,7 @@ components:
           type: string
     ItemWriteRequest:
       type: object
+      description: Public write contract for items. Category fields are compatibility fields that are mapped internally to the `items_categories` pivot table.
       properties:
         title:
           type: string
@@ -1600,9 +1609,11 @@ components:
           type: boolean
         category1_id:
           type: integer
+          description: Primary category compatibility field exposed by the API.
         category2_id:
           type: integer
           nullable: true
+          description: Secondary category compatibility field exposed by the API.
     ItemCriteriaWriteRequest:
       type: object
       required: [id_item, id_criteria, value]
@@ -1774,6 +1785,7 @@ components:
           type: string
     Item:
       type: object
+      description: Public item representation. `collection_id`, `category1_id`, and `category2_id` are stable API fields derived from pivot-backed relations rather than direct foreign key columns on `items`.
       properties:
         id:
           type: integer
@@ -1790,11 +1802,14 @@ components:
           nullable: true
         collection_id:
           type: integer
+          description: Resolved collection identifier exposed for client compatibility.
         category1_id:
           type: integer
+          description: Resolved primary category identifier exposed for client compatibility.
         category2_id:
           type: integer
           nullable: true
+          description: Resolved secondary category identifier exposed for client compatibility.
         collection:
           $ref: '#/components/schemas/CollectionSummary'
         category1:
@@ -1807,6 +1822,7 @@ components:
             $ref: '#/components/schemas/Criteria'
     ItemSummary:
       type: object
+      description: Condensed item representation using the same compatibility fields exposed by the full item schema.
       properties:
         id:
           type: integer
@@ -1823,11 +1839,14 @@ components:
           nullable: true
         collection_id:
           type: integer
+          description: Resolved collection identifier exposed for client compatibility.
         category1_id:
           type: integer
+          description: Resolved primary category identifier exposed for client compatibility.
         category2_id:
           type: integer
           nullable: true
+          description: Resolved secondary category identifier exposed for client compatibility.
     ItemCriteria:
       type: object
       properties:
