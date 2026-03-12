@@ -60,24 +60,6 @@ class Item extends Model
         return $this->collections()->first();
     }
 
-    public function category1(): ?Category
-    {
-        if ($this->relationLoaded('categories')) {
-            return $this->categories->get(0);
-        }
-
-        return $this->categories()->orderBy('category.id')->first();
-    }
-
-    public function category2(): ?Category
-    {
-        if ($this->relationLoaded('categories')) {
-            return $this->categories->get(1);
-        }
-
-        return $this->categories()->orderBy('category.id')->skip(1)->first();
-    }
-
     /**
      * An item has many criteria scores through the pivot table.
      */
@@ -90,15 +72,5 @@ class Item extends Model
     public function getCollectionIdAttribute(): ?int
     {
         return $this->collection()?->id;
-    }
-
-    public function getCategory1IdAttribute(): ?int
-    {
-        return $this->category1()?->id;
-    }
-
-    public function getCategory2IdAttribute(): ?int
-    {
-        return $this->category2()?->id;
     }
 }
