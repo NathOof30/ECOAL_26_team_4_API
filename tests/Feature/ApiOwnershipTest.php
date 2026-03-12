@@ -149,7 +149,7 @@ class ApiOwnershipTest extends TestCase
         // $this->user1 has $this->collection1
         $response = $this->actingAs($this->user1, 'sanctum')->postJson('/api/v1/items', [
             'title' => 'New Item',
-            'category1_id' => $this->cat1->id,
+            'category_ids' => [$this->cat1->id],
         ]);
 
         $response->assertStatus(201);

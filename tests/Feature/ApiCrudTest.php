@@ -221,11 +221,12 @@ class ApiCrudTest extends TestCase
             'title' => 'My First Item',
             'description' => 'A shiny new item',
             'status' => true,
-            'category1_id' => $this->category->id,
+            'category_ids' => [$this->category->id],
         ]);
         
         $itemResponse->assertStatus(201)
-                     ->assertJsonPath('data.collection_id', $collectionId);
+                     ->assertJsonPath('data.collection_id', $collectionId)
+                     ->assertJsonPath('data.categories.0.id', $this->category->id);
         $itemId = $itemResponse->json('data.id');
 
         // 3. Score the Item
