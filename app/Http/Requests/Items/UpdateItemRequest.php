@@ -14,6 +14,7 @@ class UpdateItemRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $data = [];
+        $categoryIds = $this->input('category_ids');
 
         if ($this->has('title')) {
             $data['title'] = $this->filled('title') ? trim((string) $this->input('title')) : null;
@@ -27,6 +28,10 @@ class UpdateItemRequest extends FormRequest
             $data['image_url'] = $this->filled('image_url') ? trim((string) $this->input('image_url')) : null;
         }
 
+        if ($this->has('category_ids') && is_array($categoryIds)) {
+            $data['category_ids'] = array_values(array_unique(array_map('intval', $categoryIds)));
+        }
+
         $this->merge($data);
     }
 
@@ -37,8 +42,8 @@ class UpdateItemRequest extends FormRequest
             'description' => 'nullable|string',
             'image_url' => 'nullable|string|max:255',
             'status' => 'sometimes|boolean',
-            'category1_id' => 'sometimes|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
+            'category_ids' => 'sometimes|array|min:1',
+            'category_ids.*' => 'integer|distinct|exists:category,id',
         ];
     }
 }
