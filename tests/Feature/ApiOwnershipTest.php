@@ -50,15 +50,15 @@ class ApiOwnershipTest extends TestCase
         // Create items
         $this->item1 = Item::create([
             'title' => 'Item 1',
-            'collection_id' => $this->collection1->id,
-            'category1_id' => $this->cat1->id,
         ]);
+        $this->item1->collections()->attach($this->collection1->id);
+        $this->item1->categories()->attach($this->cat1->id);
 
         $this->item2 = Item::create([
             'title' => 'Item 2',
-            'collection_id' => $this->collection2->id,
-            'category1_id' => $this->cat1->id,
         ]);
+        $this->item2->collections()->attach($this->collection2->id);
+        $this->item2->categories()->attach($this->cat1->id);
 
         // Create scores
         ItemCriteria::create([
