@@ -301,9 +301,10 @@ class ApiCrudTest extends TestCase
 
         $item = Item::create([
             'title' => 'Scored Item',
-            'collection_id' => $collection->id,
-            'category1_id' => $this->category->id,
         ]);
+
+        $item->collections()->attach($collection->id);
+        $item->categories()->attach($this->category->id);
 
         $this->postJson('/api/v1/item-criteria', [
             'id_item' => $item->id,
@@ -330,9 +331,10 @@ class ApiCrudTest extends TestCase
 
         $item = Item::create([
             'title' => 'Unscored Item',
-            'collection_id' => $collection->id,
-            'category1_id' => $this->category->id,
         ]);
+
+        $item->collections()->attach($collection->id);
+        $item->categories()->attach($this->category->id);
 
         $this->deleteJson("/api/v1/items/{$item->id}/criteria/{$this->criteria->id_criteria}")
             ->assertStatus(404)
