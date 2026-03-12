@@ -45,11 +45,13 @@ class ApiCrudTest extends TestCase
             'email' => 'newuser@example.com',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
+            'avatar_hash' => 'device-local-avatar-123',
             'user_type' => 'admin',
         ]);
 
         $response->assertStatus(201)
                  ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']])
+                 ->assertJsonPath('data.user.avatar_hash', 'device-local-avatar-123')
                  ->assertJsonPath('data.user.user_type', 'user')
                  ->assertJsonPath('data.user.is_active', true);
     }
@@ -367,5 +369,60 @@ class ApiCrudTest extends TestCase
             ->assertJsonPath('data.is_active', false);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_user_can_update_avatar_hash_without_clearing_avatar_url()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->user->update([
+            'avatar_url' => 'https://example.com/avatar.jpg',
+        ]);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_hash' => 'abc123',
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_url', 'https://example.com/avatar.jpg')
+            ->assertJsonPath('data.avatar_hash', 'abc123');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_url' => 'https://example.com/avatar.jpg',
+            'avatar_hash' => 'abc123',
+        ]);
+    }
+
+    public function test_user_can_clear_avatar_hash_with_empty_string()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->user->update([
+            'avatar_hash' => 'abc123',
+        ]);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_hash' => '',
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_hash', null);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_hash' => null,
+        ]);
+    }
+
+    public function test_public_user_endpoints_expose_avatar_hash()
+    {
+        $this->user->update([
+            'avatar_hash' => 'abc123',
+        ]);
+
+        $this->getJson('/api/v1/users/' . $this->user->id)
+            ->assertStatus(200)
+            ->assertJsonPath('data.avatar_hash', 'abc123');
+
+        $this->getJson('/api/v1/users')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.avatar_hash', 'abc123');
     }
 }
