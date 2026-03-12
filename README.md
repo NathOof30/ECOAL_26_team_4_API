@@ -77,6 +77,32 @@ Production-oriented settings to review before deploy:
 - token expiration is configurable via `SANCTUM_TOKEN_EXPIRATION`
 - login-time revocation of existing tokens is configurable via `AUTH_REVOKE_EXISTING_TOKENS_ON_LOGIN`
 
+### Environment variables worth reviewing
+
+- `APP_URL`
+- `APP_DOCS_ENABLED`
+- `API_LEGACY_ROUTES_ENABLED`
+- `API_VERSION`
+- `CORS_ALLOWED_ORIGINS`
+- `SANCTUM_STATEFUL_DOMAINS`
+- `SANCTUM_TOKEN_EXPIRATION`
+- `AUTH_TOKEN_NAME`
+- `AUTH_REVOKE_EXISTING_TOKENS_ON_LOGIN`
+- `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`
+
+### Data model note
+
+- the internal relational model uses `collections_items` for the collection-item association
+- the internal relational model uses `items_categories` for the item-category many-to-many association
+- externally, the API contract remains stable for clients and still exposes `collection_id`, `category1_id`, and `category2_id` in item responses
+- item filters and write payloads continue to accept `collection_id`, `category1_id`, and `category2_id`
+- these public fields are compatibility fields derived from the pivot-backed model, not direct foreign key columns on `items`
+
+### Request tracing and headers
+
+- API responses include `X-Request-Id` for request tracing
+- common security headers are added globally at the HTTP layer
+
 ### Run tests
 
 ```bash
@@ -237,6 +263,8 @@ Examples:
 - `GET /api/v1/collections?user_id=1&sort=title&direction=desc`
 - `GET /api/v1/items?collection_id=2&category1_id=1&status=true`
 - `GET /api/v1/item-criteria?id_item=5&sort=id_criteria&direction=asc`
+
+For `items`, `collection_id`, `category1_id`, and `category2_id` are API-level compatibility filters. Internally they are resolved through `collections_items` and `items_categories`.
 
 ## Password reset flow
 
