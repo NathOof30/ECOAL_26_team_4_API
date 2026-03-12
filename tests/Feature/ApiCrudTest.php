@@ -425,4 +425,21 @@ class ApiCrudTest extends TestCase
             ->assertStatus(200)
             ->assertJsonPath('data.0.avatar_hash', 'abc123');
     }
+
+    public function test_user_can_update_with_long_hosted_avatar_url()
+    {
+        Sanctum::actingAs($this->user);
+
+        $longUrl = 'https://cdn.example.com/avatar.jpg?token=' . str_repeat('a', 600);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_url' => $longUrl,
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_url', $longUrl);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_url' => $longUrl,
+        ]);
+    }
 }
