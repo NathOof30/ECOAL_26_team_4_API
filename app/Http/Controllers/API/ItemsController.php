@@ -26,15 +26,9 @@ class ItemsController extends Controller
             });
         }
 
-        if (request()->filled('category1_id')) {
+        if (request()->filled('category_id')) {
             $query->whereHas('categories', function ($categoryQuery) {
-                $categoryQuery->where('category.id', request('category1_id'));
-            });
-        }
-
-        if (request()->filled('category2_id')) {
-            $query->whereHas('categories', function ($categoryQuery) {
-                $categoryQuery->where('category.id', request('category2_id'));
+                $categoryQuery->where('category.id', request('category_id'));
             });
         }
 
@@ -111,20 +105,10 @@ class ItemsController extends Controller
 
     private function syncItemCategories(Item $item, array $validated): void
     {
-        if (! array_key_exists('category1_id', $validated) && ! array_key_exists('category2_id', $validated)) {
+        if (! array_key_exists('category_ids', $validated)) {
             return;
         }
 
-        $categoryIds = [];
-
-        if (! empty($validated['category1_id'])) {
-            $categoryIds[] = (int) $validated['category1_id'];
-        }
-
-        if (! empty($validated['category2_id'])) {
-            $categoryIds[] = (int) $validated['category2_id'];
-        }
-
-        $item->categories()->sync(array_values(array_unique($categoryIds)));
+        $item->categories()->sync(array_values(array_unique($validated['category_ids'])));
     }
 }
