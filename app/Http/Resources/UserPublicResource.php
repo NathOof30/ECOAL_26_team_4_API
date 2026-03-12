@@ -12,8 +12,10 @@ class UserPublicResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'email' => $this->email,
             'avatar_url' => $this->avatar_url,
             'nationality' => $this->nationality,
+            'user_type' => $this->user_type,
             'collection' => new CollectionResource($this->whenLoaded('collection')),
         ];
     }

@@ -68,7 +68,7 @@ class ItemsController extends Controller
         $validated['collection_id'] = $collection->id;
 
         $item = Item::create($validated);
-        return (new ItemResource($item->load(['category1', 'category2'])))->response()->setStatusCode(201);
+        return (new ItemResource($item->load(['collection', 'category1', 'category2', 'criteria'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -89,7 +89,7 @@ class ItemsController extends Controller
         $validated = $request->validated();
 
         $item->update($validated);
-        return new ItemResource($item->load(['category1', 'category2']));
+        return new ItemResource($item->load(['collection', 'category1', 'category2', 'criteria']));
     }
 
     /**

@@ -92,7 +92,7 @@ class ItemCriteriaController extends Controller
                     ->firstOrFail();
 
         $score->update($validated);
-        return new ItemCriteriaResource($score);
+        return new ItemCriteriaResource($score->load(['item', 'criteria']));
     }
 
     /**

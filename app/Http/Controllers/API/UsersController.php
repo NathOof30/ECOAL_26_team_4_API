@@ -130,7 +130,7 @@ class UsersController extends Controller
             ]);
         }
 
-        return new UserResource($user);
+        return new UserResource($user->load('collection'));
     }
 
     /**
