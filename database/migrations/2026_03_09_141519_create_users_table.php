@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // Hashed password
             $table->rememberToken();
-            $table->string('avatar_url')->nullable(); // Optional profile picture URL
+            $table->text('avatar_url')->nullable(); // Optional hosted avatar URL
             $table->string('nationality')->nullable(); // Optional nationality info
 
             $table->boolean('is_active')->default(true); // Whether the account is active
