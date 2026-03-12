@@ -38,15 +38,10 @@ class ItemsSeeder extends Seeder
                 'id_item' => $itemId,
             ]);
 
-            DB::table('items_categories')->insert([
-                'id_item' => $itemId,
-                'id_category' => (int) $row['category1_id'],
-            ]);
-
-            if (! empty($row['category2_id'])) {
+            foreach (array_filter(explode('|', (string) $row['category_ids'])) as $categoryId) {
                 DB::table('items_categories')->insert([
                     'id_item' => $itemId,
-                    'id_category' => (int) $row['category2_id'],
+                    'id_category' => (int) $categoryId,
                 ]);
             }
         }
