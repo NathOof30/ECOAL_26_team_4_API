@@ -27,6 +27,14 @@ class UpdateItemRequest extends FormRequest
             $data['image_url'] = $this->filled('image_url') ? trim((string) $this->input('image_url')) : null;
         }
 
+        if ($this->has('image_base64')) {
+            $data['image_base64'] = $this->filled('image_base64') ? trim((string) $this->input('image_base64')) : null;
+        }
+
+        if ($this->has('status')) {
+            $data['status'] = filter_var($this->input('status'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        }
+
         $this->merge($data);
     }
 
@@ -36,6 +44,8 @@ class UpdateItemRequest extends FormRequest
             'title' => 'sometimes|string|max:255',
             'description' => 'nullable|string',
             'image_url' => 'nullable|string|max:255',
+            'image' => 'nullable|file|image|max:5120',
+            'image_base64' => 'nullable|string',
             'status' => 'sometimes|boolean',
             'category1_id' => 'sometimes|exists:category,id',
             'category2_id' => 'nullable|exists:category,id',

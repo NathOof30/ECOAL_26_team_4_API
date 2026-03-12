@@ -10,6 +10,9 @@ use App\Models\Item;
 use App\Models\Collection;
 use App\Support\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ItemsController extends Controller
 {
@@ -63,6 +66,7 @@ class ItemsController extends Controller
 
         // Validate incoming data (collection_id is no longer needed in the request)
         $validated = $request->validated();
+        $validated = $this->applyImageInput($request, $validated);
 
         // Automatically assign the user's collection
         $validated['collection_id'] = $collection->id;
@@ -87,6 +91,7 @@ class ItemsController extends Controller
     public function update(UpdateItemRequest $request, Item $item)
     {
         $validated = $request->validated();
+        $validated = $this->applyImageInput($request, $validated, $item);
 
         $item->update($validated);
         return new ItemResource($item->load(['collection', 'category1', 'category2', 'criteria']));
@@ -99,7 +104,104 @@ class ItemsController extends Controller
     {
         $this->authorize('delete', $item);
 
+        $this->deleteManagedImage($item->image_url);
         $item->delete();
         return response()->json(null, 204);
+    }
+
+    private function applyImageInput(Request $request, array $validated, ?Item $item = null): array
+    {
+        $currentImageUrl = $item?->image_url;
+        $hasNewImageInput = $request->hasFile('image') || $request->filled('image_base64');
+
+        if ($request->hasFile('image')) {
+            $validated['image_url'] = $this->storeUploadedImage($request);
+
+            if ($currentImageUrl !== null) {
+                $this->deleteManagedImage($currentImageUrl);
+            }
+        } elseif ($request->filled('image_base64')) {
+            $validated['image_url'] = $this->storeBase64Image($request, (string) $request->input('image_base64'));
+
+            if ($currentImageUrl !== null) {
+                $this->deleteManagedImage($currentImageUrl);
+            }
+        } elseif (array_key_exists('image_url', $validated) && $validated['image_url'] !== $currentImageUrl) {
+            if ($currentImageUrl !== null) {
+                $this->deleteManagedImage($currentImageUrl);
+            }
+        } elseif (! array_key_exists('image_url', $validated) && ! $hasNewImageInput) {
+            unset($validated['image_url']);
+        }
+
+        unset($validated['image'], $validated['image_base64']);
+
+        return $validated;
+    }
+
+    private function storeUploadedImage(Request $request): string
+    {
+        $path = $request->file('image')->store('items', 'public');
+
+        return $this->buildPublicStorageUrl($request, $path);
+    }
+
+    private function storeBase64Image(Request $request, string $base64Image): string
+    {
+        $normalized = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/', '', $base64Image);
+        $binary = base64_decode((string) $normalized, true);
+
+        if ($binary === false) {
+            throw ValidationException::withMessages([
+                'image_base64' => ['The image_base64 field must contain valid base64 image data.'],
+            ]);
+        }
+
+        $imageInfo = @getimagesizefromstring($binary);
+
+        if ($imageInfo === false || ! isset($imageInfo['mime'])) {
+            throw ValidationException::withMessages([
+                'image_base64' => ['The image_base64 field must contain a valid image.'],
+            ]);
+        }
+
+        $extension = match ($imageInfo['mime']) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            default => null,
+        };
+
+        if ($extension === null) {
+            throw ValidationException::withMessages([
+                'image_base64' => ['Only jpeg, png, gif and webp images are supported.'],
+            ]);
+        }
+
+        $path = 'items/'.Str::uuid()->toString().'.'.$extension;
+        Storage::disk('public')->put($path, $binary);
+
+        return $this->buildPublicStorageUrl($request, $path);
+    }
+
+    private function buildPublicStorageUrl(Request $request, string $path): string
+    {
+        return rtrim($request->getSchemeAndHttpHost(), '/').'/storage/'.ltrim($path, '/');
+    }
+
+    private function deleteManagedImage(?string $imageUrl): void
+    {
+        if ($imageUrl === null) {
+            return;
+        }
+
+        $path = parse_url($imageUrl, PHP_URL_PATH);
+
+        if (! is_string($path) || ! str_starts_with($path, '/storage/items/')) {
+            return;
+        }
+
+        Storage::disk('public')->delete(Str::after($path, '/storage/'));
     }
 }
