@@ -33,7 +33,7 @@ class RegisterRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
-            'avatar_url' => 'nullable|string|max:255',
+            'avatar_url' => 'nullable|string|max:2048',
             'avatar_hash' => 'nullable|string|max:255',
             'nationality' => 'nullable|string|max:255',
         ];
