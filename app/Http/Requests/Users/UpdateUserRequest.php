@@ -45,6 +45,10 @@ class UpdateUserRequest extends FormRequest
             $data['avatar_url'] = $this->filled('avatar_url') ? trim((string) $this->input('avatar_url')) : null;
         }
 
+        if ($this->has('avatar_hash')) {
+            $data['avatar_hash'] = $this->filled('avatar_hash') ? trim((string) $this->input('avatar_hash')) : null;
+        }
+
         if ($this->has('nationality')) {
             $data['nationality'] = $this->filled('nationality') ? trim((string) $this->input('nationality')) : null;
         }
@@ -66,6 +70,7 @@ class UpdateUserRequest extends FormRequest
                 Password::min(8)->mixedCase()->numbers()->symbols(),
             ],
             'avatar_url' => 'nullable|string|max:255',
+            'avatar_hash' => 'nullable|string|max:255',
             'nationality' => 'nullable|string|max:255',
             'is_active' => 'sometimes|boolean',
             'user_type' => 'sometimes|string|in:admin,editor,user',
