@@ -24,11 +24,8 @@ class ItemResource extends JsonResource
             'image_url' => $this->image_url,
             'status' => $this->status,
             'collection_id' => $collection?->id,
-            'category1_id' => $categories->get(0)?->id,
-            'category2_id' => $categories->get(1)?->id,
             'collection' => $collection ? new CollectionResource($collection) : null,
-            'category1' => $categories->get(0) ? new CategoryResource($categories->get(0)) : null,
-            'category2' => $categories->get(1) ? new CategoryResource($categories->get(1)) : null,
+            'categories' => CategoryResource::collection($categories),
             'criteria' => CriteriaResource::collection($this->whenLoaded('criteria')),
         ];
     }
