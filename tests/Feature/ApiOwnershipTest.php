@@ -50,15 +50,15 @@ class ApiOwnershipTest extends TestCase
         // Create items
         $this->item1 = Item::create([
             'title' => 'Item 1',
-            'collection_id' => $this->collection1->id,
-            'category1_id' => $this->cat1->id,
         ]);
+        $this->item1->collections()->attach($this->collection1->id);
+        $this->item1->categories()->attach($this->cat1->id);
 
         $this->item2 = Item::create([
             'title' => 'Item 2',
-            'collection_id' => $this->collection2->id,
-            'category1_id' => $this->cat1->id,
         ]);
+        $this->item2->collections()->attach($this->collection2->id);
+        $this->item2->categories()->attach($this->cat1->id);
 
         // Create scores
         ItemCriteria::create([
@@ -149,7 +149,7 @@ class ApiOwnershipTest extends TestCase
         // $this->user1 has $this->collection1
         $response = $this->actingAs($this->user1, 'sanctum')->postJson('/api/v1/items', [
             'title' => 'New Item',
-            'category1_id' => $this->cat1->id,
+            'category_ids' => [$this->cat1->id],
         ]);
 
         $response->assertStatus(201);

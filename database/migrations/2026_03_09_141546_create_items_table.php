@@ -8,8 +8,8 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * Creates the items table (lighters/briquets in the collection).
-     * Each item belongs to one collection and references up to two categories.
+     * Creates the items table (lighters/briquets).
+     * Collection and category links are managed through pivot tables.
      */
     public function up(): void
     {
@@ -22,21 +22,6 @@ return new class extends Migration
             $table->boolean('status')->default(false); // Publication status (false = private, true = public)
             $table->timestamp('created_at')->useCurrent(); // Creation timestamp
 
-            // Foreign key to collections table — each item belongs to a collection
-            $table->foreignId('collection_id')
-                ->constrained()
-                ->onDelete('cascade');
-
-            // Foreign key to category table — primary category (e.g. Mécanisme)
-            $table->foreignId('category1_id')
-                ->constrained('category')
-                ->onDelete('cascade');
-
-            // Foreign key to category table — optional secondary category (e.g. Période)
-            $table->foreignId('category2_id')
-                ->nullable()
-                ->constrained('category')
-                ->onDelete('set null');
         });
     }
 

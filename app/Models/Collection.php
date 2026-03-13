@@ -35,6 +35,6 @@ class Collection extends Model
      */
     public function items()
     {
-        return $this->hasMany(Item::class);
+        return $this->belongsToMany(Item::class, 'collections_items', 'id_collection', 'id_item');
     }
 }

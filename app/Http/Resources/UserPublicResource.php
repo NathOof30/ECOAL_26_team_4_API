@@ -13,6 +13,7 @@ class UserPublicResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'avatar_url' => $this->avatar_url,
+            'avatar_hash' => $this->avatar_hash,
             'nationality' => $this->nationality,
             'collection' => new CollectionResource($this->whenLoaded('collection')),
         ];

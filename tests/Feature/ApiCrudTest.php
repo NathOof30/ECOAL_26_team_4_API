@@ -45,11 +45,13 @@ class ApiCrudTest extends TestCase
             'email' => 'newuser@example.com',
             'password' => 'StrongPass1!',
             'password_confirmation' => 'StrongPass1!',
+            'avatar_hash' => 'device-local-avatar-123',
             'user_type' => 'admin',
         ]);
 
         $response->assertStatus(201)
                  ->assertJsonStructure(['data' => ['access_token', 'token_type', 'user']])
+                 ->assertJsonPath('data.user.avatar_hash', 'device-local-avatar-123')
                  ->assertJsonPath('data.user.user_type', 'user')
                  ->assertJsonPath('data.user.is_active', true);
     }
@@ -221,11 +223,12 @@ class ApiCrudTest extends TestCase
             'title' => 'My First Item',
             'description' => 'A shiny new item',
             'status' => true,
-            'category1_id' => $this->category->id,
+            'category_ids' => [$this->category->id],
         ]);
         
         $itemResponse->assertStatus(201)
-                     ->assertJsonPath('data.collection_id', $collectionId);
+                     ->assertJsonPath('data.collection_id', $collectionId)
+                     ->assertJsonPath('data.categories.0.id', $this->category->id);
         $itemId = $itemResponse->json('data.id');
 
         // 3. Score the Item
@@ -301,9 +304,10 @@ class ApiCrudTest extends TestCase
 
         $item = Item::create([
             'title' => 'Scored Item',
-            'collection_id' => $collection->id,
-            'category1_id' => $this->category->id,
         ]);
+
+        $item->collections()->attach($collection->id);
+        $item->categories()->attach($this->category->id);
 
         $this->postJson('/api/v1/item-criteria', [
             'id_item' => $item->id,
@@ -330,9 +334,10 @@ class ApiCrudTest extends TestCase
 
         $item = Item::create([
             'title' => 'Unscored Item',
-            'collection_id' => $collection->id,
-            'category1_id' => $this->category->id,
         ]);
+
+        $item->collections()->attach($collection->id);
+        $item->categories()->attach($this->category->id);
 
         $this->deleteJson("/api/v1/items/{$item->id}/criteria/{$this->criteria->id_criteria}")
             ->assertStatus(404)
@@ -364,5 +369,77 @@ class ApiCrudTest extends TestCase
             ->assertJsonPath('data.is_active', false);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
+    public function test_user_can_update_avatar_hash_without_clearing_avatar_url()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->user->update([
+            'avatar_url' => 'https://example.com/avatar.jpg',
+        ]);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_hash' => 'abc123',
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_url', 'https://example.com/avatar.jpg')
+            ->assertJsonPath('data.avatar_hash', 'abc123');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_url' => 'https://example.com/avatar.jpg',
+            'avatar_hash' => 'abc123',
+        ]);
+    }
+
+    public function test_user_can_clear_avatar_hash_with_empty_string()
+    {
+        Sanctum::actingAs($this->user);
+
+        $this->user->update([
+            'avatar_hash' => 'abc123',
+        ]);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_hash' => '',
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_hash', null);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_hash' => null,
+        ]);
+    }
+
+    public function test_public_user_endpoints_expose_avatar_hash()
+    {
+        $this->user->update([
+            'avatar_hash' => 'abc123',
+        ]);
+
+        $this->getJson('/api/v1/users/' . $this->user->id)
+            ->assertStatus(200)
+            ->assertJsonPath('data.avatar_hash', 'abc123');
+
+        $this->getJson('/api/v1/users')
+            ->assertStatus(200)
+            ->assertJsonPath('data.0.avatar_hash', 'abc123');
+    }
+
+    public function test_user_can_update_with_long_hosted_avatar_url()
+    {
+        Sanctum::actingAs($this->user);
+
+        $longUrl = 'https://cdn.example.com/avatar.jpg?token=' . str_repeat('a', 600);
+
+        $this->putJson('/api/v1/users/' . $this->user->id, [
+            'avatar_url' => $longUrl,
+        ])->assertStatus(200)
+            ->assertJsonPath('data.avatar_url', $longUrl);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $this->user->id,
+            'avatar_url' => $longUrl,
+        ]);
     }
 }

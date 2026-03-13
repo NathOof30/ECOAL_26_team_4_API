@@ -18,18 +18,18 @@ class ItemsController extends Controller
      */
     public function index()
     {
-        $query = Item::with(['collection', 'category1', 'category2', 'criteria']);
+        $query = Item::with(['collections', 'categories', 'criteria']);
 
         if (request()->filled('collection_id')) {
-            $query->where('collection_id', request('collection_id'));
+            $query->whereHas('collections', function ($collectionQuery) {
+                $collectionQuery->where('collections.id', request('collection_id'));
+            });
         }
 
-        if (request()->filled('category1_id')) {
-            $query->where('category1_id', request('category1_id'));
-        }
-
-        if (request()->filled('category2_id')) {
-            $query->where('category2_id', request('category2_id'));
+        if (request()->filled('category_id')) {
+            $query->whereHas('categories', function ($categoryQuery) {
+                $categoryQuery->where('category.id', request('category_id'));
+            });
         }
 
         if (request()->filled('status')) {
@@ -40,7 +40,7 @@ class ItemsController extends Controller
             $query->where('title', 'like', '%'.request('title').'%');
         }
 
-        $sort = in_array(request('sort'), ['id', 'title', 'collection_id', 'created_at'], true) ? request('sort') : 'id';
+        $sort = in_array(request('sort'), ['id', 'title', 'created_at'], true) ? request('sort') : 'id';
         $direction = request('direction') === 'desc' ? 'desc' : 'asc';
         $perPage = min((int) request('per_page', 15), 100);
 
@@ -61,14 +61,12 @@ class ItemsController extends Controller
             return ApiResponse::error('You must create a collection first before adding items.', 403);
         }
 
-        // Validate incoming data (collection_id is no longer needed in the request)
         $validated = $request->validated();
-
-        // Automatically assign the user's collection
-        $validated['collection_id'] = $collection->id;
-
         $item = Item::create($validated);
-        return (new ItemResource($item->load(['category1', 'category2'])))->response()->setStatusCode(201);
+        $item->collections()->attach($collection->id);
+        $this->syncItemCategories($item, $validated);
+
+        return (new ItemResource($item->load(['collections', 'categories', 'criteria'])))->response()->setStatusCode(201);
     }
 
     /**
@@ -77,7 +75,7 @@ class ItemsController extends Controller
     public function show(Item $item)
     {
         // Load all relationships for the item
-        $item->load(['collection', 'category1', 'category2', 'criteria']);
+        $item->load(['collections', 'categories', 'criteria']);
         return new ItemResource($item);
     }
 
@@ -89,7 +87,9 @@ class ItemsController extends Controller
         $validated = $request->validated();
 
         $item->update($validated);
-        return new ItemResource($item->load(['category1', 'category2']));
+        $this->syncItemCategories($item, $validated);
+
+        return new ItemResource($item->load(['collections', 'categories', 'criteria']));
     }
 
     /**
@@ -101,5 +101,14 @@ class ItemsController extends Controller
 
         $item->delete();
         return response()->json(null, 204);
+    }
+
+    private function syncItemCategories(Item $item, array $validated): void
+    {
+        if (! array_key_exists('category_ids', $validated)) {
+            return;
+        }
+
+        $item->categories()->sync(array_values(array_unique($validated['category_ids'])));
     }
 }

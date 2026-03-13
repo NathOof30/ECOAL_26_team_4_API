@@ -13,10 +13,17 @@ class StoreItemRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $categoryIds = $this->input('category_ids');
+
+        if (is_array($categoryIds)) {
+            $categoryIds = array_values(array_unique(array_map('intval', $categoryIds)));
+        }
+
         $this->merge([
             'title' => trim((string) $this->input('title')),
             'description' => $this->filled('description') ? trim((string) $this->input('description')) : null,
             'image_url' => $this->filled('image_url') ? trim((string) $this->input('image_url')) : null,
+            'category_ids' => $categoryIds,
         ]);
     }
 
@@ -27,8 +34,8 @@ class StoreItemRequest extends FormRequest
             'description' => 'nullable|string',
             'image_url' => 'nullable|string|max:255',
             'status' => 'nullable|boolean',
-            'category1_id' => 'required|exists:category,id',
-            'category2_id' => 'nullable|exists:category,id',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'integer|distinct|exists:category,id',
         ];
     }
 }
